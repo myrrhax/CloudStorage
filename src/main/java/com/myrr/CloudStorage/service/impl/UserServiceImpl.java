@@ -4,6 +4,7 @@ import com.myrr.CloudStorage.domain.dto.UserDto;
 import com.myrr.CloudStorage.domain.entity.Role;
 import com.myrr.CloudStorage.domain.entity.User;
 import com.myrr.CloudStorage.domain.enums.RoleType;
+import com.myrr.CloudStorage.domain.exceptions.badrequest.UsernameOrEmailAlreadyExistsException;
 import com.myrr.CloudStorage.domain.exceptions.notfound.UserNotFoundException;
 import com.myrr.CloudStorage.repository.UserRepository;
 import com.myrr.CloudStorage.service.RoleService;
@@ -36,9 +37,13 @@ public class UserServiceImpl implements UserService {
         User user = this.userMapper.fromDto(dto, false);
         Role role = this.roleService.getRole(RoleType.USER);
         user.addRole(role);
-        User savedUser = this.userRepository.save(user);
+        try {
+            User savedUser = this.userRepository.save(user);
 
-        return this.userMapper.toDto(savedUser);
+            return this.userMapper.toDto(savedUser);
+        } catch (Exception exception) {
+            throw new UsernameOrEmailAlreadyExistsException(user.getName(), user.getEmail());
+        }
     }
 
     @Override
