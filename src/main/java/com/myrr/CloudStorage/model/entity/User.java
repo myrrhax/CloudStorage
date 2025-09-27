@@ -2,6 +2,7 @@ package com.myrr.CloudStorage.model.entity;
 
 import jakarta.persistence.*;
 
+import java.util.HashSet;
 import java.util.Set;
 
 @Entity
@@ -39,16 +40,21 @@ public class User {
     public User(String name,
                 String email,
                 String password,
-                Boolean isConfirmed,
+                boolean isConfirmed,
                 String avatarUrl) {
         this.name = name;
         this.email = email;
         this.password = password;
-        this.isConfirmed = isConfirmed;
         this.avatarUrl = avatarUrl;
+        this.isConfirmed = isConfirmed;
+        this.roles = new HashSet<>();
     }
 
     private User() {
+    }
+
+    public void addRole(Role role) {
+        this.roles.add(role);
     }
 
     public Long getId() {
@@ -97,5 +103,13 @@ public class User {
 
     public void setAvatarUrl(String avatarUrl) {
         this.avatarUrl = avatarUrl;
+    }
+
+    public Set<Role> getRoles() {
+        return roles;
+    }
+
+    public void setRoles(Set<Role> roles) {
+        this.roles = roles;
     }
 }
