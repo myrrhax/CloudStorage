@@ -1,0 +1,13 @@
+spring:
+  application:
+    name: CloudStorage
+  datasource:
+    url: jdbc:postgresql://localhost:5432/cloudStorage
+    driver-class: org.postgresql.Driver
+  jpa:
+    show-sql: true
+    hibernate:
+      ddl-auto: validate
+
+server:
+  port: 8000
