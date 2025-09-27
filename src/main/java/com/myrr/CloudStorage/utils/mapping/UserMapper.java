@@ -1,8 +1,7 @@
 package com.myrr.CloudStorage.utils.mapping;
 
-import com.myrr.CloudStorage.model.dto.UserDto;
-import com.myrr.CloudStorage.model.entity.User;
-import com.nimbusds.oauth2.sdk.Role;
+import com.myrr.CloudStorage.domain.dto.UserDto;
+import com.myrr.CloudStorage.domain.entity.User;
 import org.springframework.stereotype.Component;
 
 import java.util.stream.Collectors;

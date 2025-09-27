@@ -1,6 +1,6 @@
-package com.myrr.CloudStorage.model.entity;
+package com.myrr.CloudStorage.domain.entity;
 
-import com.myrr.CloudStorage.model.enums.RoleType;
+import com.myrr.CloudStorage.domain.enums.RoleType;
 import jakarta.persistence.*;
 
 @Entity

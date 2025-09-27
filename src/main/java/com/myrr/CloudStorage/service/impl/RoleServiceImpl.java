@@ -1,7 +1,7 @@
 package com.myrr.CloudStorage.service.impl;
 
-import com.myrr.CloudStorage.model.entity.Role;
-import com.myrr.CloudStorage.model.enums.RoleType;
+import com.myrr.CloudStorage.domain.entity.Role;
+import com.myrr.CloudStorage.domain.enums.RoleType;
 import com.myrr.CloudStorage.repository.RoleRepository;
 import com.myrr.CloudStorage.service.RoleService;
 import org.springframework.beans.factory.annotation.Autowired;

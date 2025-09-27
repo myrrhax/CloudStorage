@@ -1,4 +1,4 @@
-package com.myrr.CloudStorage.model.entity;
+package com.myrr.CloudStorage.domain.entity;
 
 import jakarta.persistence.*;
 

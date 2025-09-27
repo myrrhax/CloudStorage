@@ -1,4 +1,4 @@
-package com.myrr.CloudStorage.model.dto;
+package com.myrr.CloudStorage.domain.dto;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonView;
