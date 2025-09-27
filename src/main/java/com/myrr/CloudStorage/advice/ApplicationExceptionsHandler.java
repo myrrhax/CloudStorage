@@ -11,13 +11,12 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
-import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
+import org.springframework.web.bind.annotation.RestControllerAdvice;
 
-import java.util.Map;
 import java.util.stream.Collectors;
 
-@ControllerAdvice
+@RestControllerAdvice
 public class ApplicationExceptionsHandler {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(ApplicationExceptionsHandler.class);
@@ -39,20 +38,8 @@ public class ApplicationExceptionsHandler {
     @ExceptionHandler(BaseException.class)
     public ResponseEntity<ErrorResponseDto> handle(BaseException exception) {
         ErrorResponseDto responseDto = new ErrorResponseDto(exception.getMessage(), exception.getApiCode());
-        HttpStatus statusCode = HttpStatus.INTERNAL_SERVER_ERROR;
-
-        if (exception instanceof NotFoundApiException)
-            statusCode = HttpStatus.NOT_FOUND;
+        HttpStatus statusCode = exception.getStatusCode();
 
         return new ResponseEntity<>(responseDto, statusCode);
-    }
-
-    @ExceptionHandler(Exception.class)
-    public ResponseEntity<ErrorResponseDto> handle(Exception exception) {
-        LOGGER.error("An error occurred request processing: {}", exception.getMessage());
-
-        return ResponseEntity
-                .status(HttpStatus.INTERNAL_SERVER_ERROR)
-                .body(new ErrorResponseDto("Something went wrong", ApiErrorCode.INTERNAL_ERROR));
     }
 }

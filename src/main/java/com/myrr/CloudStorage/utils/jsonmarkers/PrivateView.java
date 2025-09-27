@@ -1,4 +1,4 @@
 package com.myrr.CloudStorage.utils.jsonmarkers;
 
-public interface PrivateView {
+public interface PrivateView extends PublicView {
 }
