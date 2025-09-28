@@ -2,9 +2,7 @@ package com.myrr.CloudStorage.advice;
 
 import com.myrr.CloudStorage.domain.dto.ErrorResponseDto;
 import com.myrr.CloudStorage.domain.dto.ValidationErrorResponseDto;
-import com.myrr.CloudStorage.domain.enums.ApiErrorCode;
 import com.myrr.CloudStorage.domain.exceptions.BaseException;
-import com.myrr.CloudStorage.domain.exceptions.notfound.NotFoundApiException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
