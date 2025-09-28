@@ -2,6 +2,7 @@ package com.myrr.CloudStorage.configuration;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpStatus;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
@@ -18,6 +19,14 @@ public class SecurityConfiguration {
             .authorizeHttpRequests(req -> {
                 req.requestMatchers("/api/auth/**").permitAll();
                 req.anyRequest().authenticated();
+            })
+            .exceptionHandling(config -> {
+                config.accessDeniedHandler((req, resp, exception) -> {
+                   resp.setStatus(HttpStatus.FORBIDDEN.value());
+                });
+                config.authenticationEntryPoint(((request, response, authException) -> {
+                    response.setStatus(HttpStatus.UNAUTHORIZED.value());
+                }));
             })
             .sessionManagement(session -> {
                 session.sessionCreationPolicy(SessionCreationPolicy.STATELESS);
