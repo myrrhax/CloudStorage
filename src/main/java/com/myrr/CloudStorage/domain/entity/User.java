@@ -37,6 +37,14 @@ public class User {
     )
     private Set<Role> roles;
 
+    @ManyToMany(fetch = FetchType.LAZY)
+    @JoinTable(
+        name = "t_user_refresh_tokens",
+        joinColumns = @JoinColumn(name = "user_id"),
+        inverseJoinColumns = @JoinColumn(name = "refresh_id")
+    )
+    private Set<RefreshToken> tokens;
+
     public User(String name,
                 String email,
                 String password,
@@ -48,6 +56,7 @@ public class User {
         this.avatarUrl = avatarUrl;
         this.isConfirmed = isConfirmed;
         this.roles = new HashSet<>();
+        this.tokens = new HashSet<>();
     }
 
     private User() {
@@ -111,5 +120,13 @@ public class User {
 
     public void setRoles(Set<Role> roles) {
         this.roles = roles;
+    }
+
+    public Set<RefreshToken> getTokens() {
+        return tokens;
+    }
+
+    public void setTokens(Set<RefreshToken> tokens) {
+        this.tokens = tokens;
     }
 }
