@@ -37,12 +37,7 @@ public class User {
     )
     private Set<Role> roles;
 
-    @ManyToMany(fetch = FetchType.LAZY)
-    @JoinTable(
-        name = "t_user_refresh_tokens",
-        joinColumns = @JoinColumn(name = "user_id"),
-        inverseJoinColumns = @JoinColumn(name = "refresh_id")
-    )
+    @OneToMany(fetch = FetchType.LAZY, mappedBy = "user")
     private Set<RefreshToken> tokens;
 
     public User(String name,

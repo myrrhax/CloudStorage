@@ -1,9 +1,6 @@
 package com.myrr.CloudStorage.domain.entity;
 
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.Id;
-import jakarta.persistence.Table;
+import jakarta.persistence.*;
 
 import java.time.Instant;
 import java.util.Objects;
@@ -13,6 +10,7 @@ import java.util.UUID;
 @Table(name = "t_refresh_tokens")
 public class RefreshToken {
     @Id
+    @GeneratedValue(strategy = GenerationType.UUID)
     @Column(name = "id")
     private UUID id;
 
@@ -25,11 +23,15 @@ public class RefreshToken {
     @Column(name = "expires_at")
     private Instant expiresAt;
 
-    public RefreshToken(String token, Instant issuedAt, Instant expiresAt) {
-        this.id = UUID.randomUUID();
+    @ManyToOne
+    @JoinColumn(name = "user_id", nullable = false)
+    private User user;
+
+    public RefreshToken(String token, Instant issuedAt, Instant expiresAt, User user) {
         this.token = token;
         this.issuedAt = issuedAt;
         this.expiresAt = expiresAt;
+        this.user = user;
     }
 
     private RefreshToken() {
@@ -77,5 +79,13 @@ public class RefreshToken {
 
     public void setExpiresAt(Instant expiresAt) {
         this.expiresAt = expiresAt;
+    }
+
+    public User getUser() {
+        return user;
+    }
+
+    public void setUser(User user) {
+        this.user = user;
     }
 }

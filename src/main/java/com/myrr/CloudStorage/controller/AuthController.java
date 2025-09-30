@@ -1,10 +1,12 @@
 package com.myrr.CloudStorage.controller;
 
 import com.fasterxml.jackson.annotation.JsonView;
+import com.myrr.CloudStorage.domain.dto.TokenResponseDto;
 import com.myrr.CloudStorage.domain.dto.UserDto;
-import com.myrr.CloudStorage.service.UserService;
+import com.myrr.CloudStorage.service.AuthService;
 import com.myrr.CloudStorage.utils.jsonmarkers.PrivateView;
-import com.myrr.CloudStorage.utils.jsonmarkers.PublicView;
+import com.myrr.CloudStorage.utils.jwt.JwtUtils;
+import com.myrr.CloudStorage.utils.validation.Login;
 import com.myrr.CloudStorage.utils.validation.OnCreate;
 import jakarta.validation.groups.Default;
 import org.slf4j.Logger;
@@ -16,35 +18,54 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.util.UriComponents;
 import org.springframework.web.util.UriComponentsBuilder;
 
+import java.security.Principal;
+
 @RestController
 @RequestMapping("/api/auth")
 public class AuthController {
     private static final Logger LOGGER = LoggerFactory.getLogger(AuthController.class);
-    private final UserService userService;
+    private final AuthService authService;
 
     @Autowired
-    public AuthController(UserService userService) {
-        this.userService = userService;
+    public AuthController(AuthService authService,
+                          JwtUtils jwtUtils) {
+        this.authService = authService;
     }
 
     @PostMapping("/register")
-    @JsonView(PrivateView.class)
-    public ResponseEntity<UserDto> register(@RequestBody @Validated({Default.class, OnCreate.class}) UserDto dto,
-                                        UriComponentsBuilder uriComponentsBuilder) {
-        UserDto resultDto = this.userService.addUser(dto);
+    public ResponseEntity<TokenResponseDto> register(@RequestBody @Validated({Default.class, OnCreate.class}) UserDto dto,
+                                                     UriComponentsBuilder uriComponentsBuilder) {
+        TokenResponseDto resultDto = this.authService.register(dto);
         UriComponents location = uriComponentsBuilder
-                .path("/api/auth/users/{id}")
-                .buildAndExpand(resultDto.id());
+                .path("/api/auth") // ToDo change
+                .buildAndExpand(resultDto.user().id());
 
         return ResponseEntity.created(location.toUri())
                 .body(resultDto);
     }
 
-    @GetMapping("/users/{id}")
-    @JsonView(PublicView.class)
-    public ResponseEntity<UserDto> getById(@PathVariable long id) {
-        UserDto dto = this.userService.getUser(id);
+    @PostMapping("/login")
+    public ResponseEntity<TokenResponseDto> login(@RequestBody @Validated({Login.class}) UserDto dto) {
+        TokenResponseDto resultDto = this.authService.login(dto);
 
-        return ResponseEntity.ok(dto);
+        return ResponseEntity.ok()
+                .body(resultDto);
     }
+
+    @PostMapping("/refresh")
+    public ResponseEntity<TokenResponseDto> refresh(@RequestBody final String refresh) {
+        TokenResponseDto resultDto = this.authService.refresh(refresh);
+
+        return ResponseEntity.ok()
+                .body(resultDto);
+    }
+
+    @GetMapping("/me")
+    @JsonView(PrivateView.class)
+    public ResponseEntity<UserDto> getMe(Principal principal) {
+        return ResponseEntity
+                .ok(this.authService.getMe(principal));
+    }
+
+
 }

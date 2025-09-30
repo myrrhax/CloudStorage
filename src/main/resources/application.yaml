@@ -9,5 +9,10 @@ spring:
     hibernate:
       ddl-auto: validate
 
+jwt:
+  lifetime: 5m
+  issuer: localhost:8000
+  refreshLifetime: 30d
+
 server:
   port: 8000
