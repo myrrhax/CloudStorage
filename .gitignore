@@ -32,4 +32,4 @@ build/
 ### VS Code ###
 .vscode/
 
-user.json
+src/main/resources/user.json
