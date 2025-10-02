@@ -1,0 +1,7 @@
+CREATE TABLE IF NOT EXISTS files_metadata (
+    id          UUID PRIMARY KEY,
+    file_url    VARCHAR(255) NOT NULL UNIQUE,
+    name        VARCHAR(55) NOT NULL,
+    file_type   VARCHAR(20) NOT NULL,
+    owner_id    BIGINT NOT NULL REFERENCES users ON DELETE CASCADE ON UPDATE NO ACTION
+);

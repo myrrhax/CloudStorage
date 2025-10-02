@@ -2,7 +2,9 @@ package com.myrr.CloudStorage.domain.entity;
 
 import jakarta.persistence.*;
 
+import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 @Entity
@@ -40,6 +42,9 @@ public class User {
     @OneToMany(fetch = FetchType.LAZY, mappedBy = "user")
     private Set<RefreshToken> tokens;
 
+    @OneToMany(mappedBy = "owner", fetch = FetchType.LAZY)
+    private List<FileMetadata> files;
+
     public User(String name,
                 String email,
                 String password,
@@ -52,6 +57,7 @@ public class User {
         this.isConfirmed = isConfirmed;
         this.roles = new HashSet<>();
         this.tokens = new HashSet<>();
+        this.files = new ArrayList<>();
     }
 
     private User() {
@@ -123,5 +129,13 @@ public class User {
 
     public void setTokens(Set<RefreshToken> tokens) {
         this.tokens = tokens;
+    }
+
+    public List<FileMetadata> getFiles() {
+        return files;
+    }
+
+    public void setFiles(List<FileMetadata> files) {
+        this.files = files;
     }
 }
