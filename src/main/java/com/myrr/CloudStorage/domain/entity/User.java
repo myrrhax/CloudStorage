@@ -2,10 +2,7 @@ package com.myrr.CloudStorage.domain.entity;
 
 import jakarta.persistence.*;
 
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 @Entity
 @Table(name = "users")
@@ -28,10 +25,11 @@ public class User {
     @Column(name = "is_confirmed", nullable = false)
     private Boolean isConfirmed;
 
-    @Column(name = "avatar_url")
-    private String avatarUrl;
+    @OneToOne(cascade = CascadeType.ALL)
+    @JoinColumn(name = "avatar_id")
+    private FileMetadata avatar;
 
-    @ManyToMany(fetch = FetchType.EAGER)
+    @ManyToMany(fetch = FetchType.EAGER, cascade = CascadeType.ALL)
     @JoinTable(
         name = "user_roles",
         joinColumns = @JoinColumn(name = "user_id"),
@@ -39,22 +37,20 @@ public class User {
     )
     private Set<Role> roles;
 
-    @OneToMany(fetch = FetchType.LAZY, mappedBy = "user")
+    @OneToMany(fetch = FetchType.LAZY, cascade = CascadeType.ALL, mappedBy = "user")
     private Set<RefreshToken> tokens;
 
-    @OneToMany(mappedBy = "owner", fetch = FetchType.LAZY)
+    @OneToMany(mappedBy = "owner", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
     private List<FileMetadata> files;
 
     public User(String name,
                 String email,
-                String password,
-                boolean isConfirmed,
-                String avatarUrl) {
+                String password) {
         this.name = name;
         this.email = email;
         this.password = password;
-        this.avatarUrl = avatarUrl;
-        this.isConfirmed = isConfirmed;
+        this.avatar = null;
+        this.isConfirmed = false;
         this.roles = new HashSet<>();
         this.tokens = new HashSet<>();
         this.files = new ArrayList<>();
@@ -107,14 +103,6 @@ public class User {
         isConfirmed = confirmed;
     }
 
-    public String getAvatarUrl() {
-        return avatarUrl;
-    }
-
-    public void setAvatarUrl(String avatarUrl) {
-        this.avatarUrl = avatarUrl;
-    }
-
     public Set<Role> getRoles() {
         return roles;
     }
@@ -137,5 +125,13 @@ public class User {
 
     public void setFiles(List<FileMetadata> files) {
         this.files = files;
+    }
+
+    public FileMetadata getAvatar() {
+        return avatar;
+    }
+
+    public void setAvatar(FileMetadata avatar) {
+        this.avatar = avatar;
     }
 }

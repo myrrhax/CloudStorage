@@ -1,0 +1,2 @@
+ALTER TABLE files_metadata
+ALTER COLUMN name TYPE VARCHAR;

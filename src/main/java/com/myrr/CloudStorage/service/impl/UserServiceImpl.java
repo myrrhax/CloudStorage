@@ -1,16 +1,11 @@
 package com.myrr.CloudStorage.service.impl;
 
 import com.myrr.CloudStorage.domain.dto.UserDto;
-import com.myrr.CloudStorage.domain.entity.Role;
 import com.myrr.CloudStorage.domain.entity.User;
-import com.myrr.CloudStorage.domain.enums.RoleType;
-import com.myrr.CloudStorage.domain.exceptions.conflict.UsernameOrEmailAlreadyExistsException;
 import com.myrr.CloudStorage.domain.exceptions.notfound.UserNotFoundException;
 import com.myrr.CloudStorage.repository.UserRepository;
 import com.myrr.CloudStorage.security.JwtEntity;
-import com.myrr.CloudStorage.service.RoleService;
 import com.myrr.CloudStorage.service.UserService;
-import com.myrr.CloudStorage.utils.jwt.JwtUtils;
 import com.myrr.CloudStorage.utils.mapping.UserMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -19,11 +14,9 @@ import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
-import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.security.Principal;
 import java.util.Optional;
 
 @Service
@@ -62,14 +55,14 @@ public class UserServiceImpl implements UserService, UserDetailsService {
                 .orElseThrow(() -> new UsernameNotFoundException(username));
 
         return new JwtEntity(
-            user.getId(),
-            user.getName(),
-            user.getPassword(),
-            user.getRoles()
-                    .stream()
-                    .map(role -> role.getRole().name())
-                    .map(SimpleGrantedAuthority::new)
-                    .toList()
+                user.getId(),
+                user.getName(),
+                user.getPassword(),
+                user.getRoles()
+                        .stream()
+                        .map(role -> role.getRole().name())
+                        .map(SimpleGrantedAuthority::new)
+                        .toList()
         );
     }
 }

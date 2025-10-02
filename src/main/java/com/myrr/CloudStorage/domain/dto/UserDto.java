@@ -12,6 +12,7 @@ import jakarta.validation.groups.Default;
 import org.hibernate.validator.constraints.URL;
 
 import java.util.Set;
+import java.util.UUID;
 
 public record UserDto (
     @JsonProperty(value = "id")
@@ -50,6 +51,6 @@ public record UserDto (
     @URL
     @Null
     @JsonView(PublicView.class)
-    String avatarUrl
+    UUID avatarId
 ) {
 }

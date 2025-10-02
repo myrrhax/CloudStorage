@@ -14,5 +14,10 @@ jwt:
   issuer: localhost:8000
   refreshLifetime: 30d
 
+minio:
+  endpoint: http://localhost:9000
+  avatar.bucket: avatars
+  users.bucket: users
+
 server:
   port: 8000

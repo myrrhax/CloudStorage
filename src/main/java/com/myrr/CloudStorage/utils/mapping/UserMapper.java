@@ -19,7 +19,7 @@ public class UserMapper {
                         .map(role -> role.getRole().name())
                         .collect(Collectors.toSet()),
                 user.getConfirmed(),
-                user.getAvatarUrl()
+                user.getAvatar() != null ? user.getAvatar().getId() : null
         );
     }
 
@@ -27,9 +27,7 @@ public class UserMapper {
         return new User(
             dto.name(),
             dto.email(),
-            dto.password(),
-            isConfirmed,
-            dto.avatarUrl()
+            dto.password()
         );
     }
 }
