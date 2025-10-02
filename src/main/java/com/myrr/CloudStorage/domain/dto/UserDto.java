@@ -51,6 +51,6 @@ public record UserDto (
     @URL
     @Null
     @JsonView(PublicView.class)
-    UUID avatarId
+    String avatarUrl
 ) {
 }
