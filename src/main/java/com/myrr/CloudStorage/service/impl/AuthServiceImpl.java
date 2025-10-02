@@ -92,14 +92,6 @@ public class AuthServiceImpl implements AuthService {
         return new TokenResponseDto(newAccessToken, newToken.getToken(), this.userMapper.toDto(user));
     }
 
-    @Override
-    public UserDto getMe(Principal principal) {
-        var user = this.userRepository.findByName(principal.getName())
-                .orElseThrow(() -> new UserNotFoundException(principal.getName()));
-
-        return this.userMapper.toDto(user);
-    }
-
     private User saveUser(final UserDto dto) {
         User user = this.userMapper.fromDto(dto, false);
         Role role = this.roleService.getRole(RoleType.USER);

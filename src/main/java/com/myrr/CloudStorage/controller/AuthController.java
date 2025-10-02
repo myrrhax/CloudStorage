@@ -60,13 +60,6 @@ public class AuthController {
                 .body(resultDto);
     }
 
-    @GetMapping("/me")
-    @JsonView(PrivateView.class)
-    public ResponseEntity<JwtEntity> getMe(@AuthenticationPrincipal UserDetails userDetails) {
-        return ResponseEntity
-                .ok(jwtEntity);
-    }
-
     @PostMapping("/logout")
     public ResponseEntity<Void> logout(@RequestBody String refresh) {
         this.authService.logout(refresh);
