@@ -8,7 +8,7 @@ import java.security.Principal;
 public interface AuthService {
     TokenResponseDto register(UserDto dto);
     TokenResponseDto login(UserDto dto);
-    void logout();
+    void logout(String refresh);
     TokenResponseDto refresh(String refreshToken);
     UserDto getMe(Principal principal);
 }

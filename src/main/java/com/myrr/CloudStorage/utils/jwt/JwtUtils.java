@@ -22,7 +22,7 @@ import java.util.Map;
 @Component
 @ConfigurationProperties(prefix = "jwt")
 public final class JwtUtils {
-    public static final String NAME_CLAIM_NAME = "name";
+    public static final String ID_CLAIM_NAME = "id";
     public static final String ROLES_CLAIM_NAME = "roles";
     private String secret;
     private Duration lifetime;
@@ -36,11 +36,13 @@ public final class JwtUtils {
     }
 
     public String generateToken(User user) {
+        List<String> authorities = user.getRoles()
+                .stream()
+                .map(role -> role.getRole().name())
+                .toList();
         Map<String, Object> claims = Map.of(
-            ROLES_CLAIM_NAME, user.getRoles()
-                        .stream()
-                        .map(role -> role.getRole().name())
-                        .toList()
+            ID_CLAIM_NAME, user.getId(),
+            ROLES_CLAIM_NAME, authorities
         );
         Instant issuedTime = Instant.now();
         Instant expirationTime = issuedTime.plus(lifetime);
@@ -65,6 +67,7 @@ public final class JwtUtils {
                 .map(role -> "GRANT_" + role)
                 .forEach(authorities::add);
         Map<String, Object> claims = Map.of(
+            ID_CLAIM_NAME, user.getId(),
             ROLES_CLAIM_NAME, authorities
         );
         Instant issuedTime = Instant.now();
@@ -87,7 +90,7 @@ public final class JwtUtils {
     }
 
     public List<String> getRoles(String token) {
-        List claims = parseClaims(token)
+        List<String> claims = parseClaims(token)
                 .get(ROLES_CLAIM_NAME, List.class);
         if (claims == null) {
             throw new IllegalArgumentException("Role claims cannot be empty");
@@ -95,6 +98,11 @@ public final class JwtUtils {
         return claims.stream()
                 .map(Object::toString)
                 .toList();
+    }
+
+    public long parseUserId(String token) {
+        return parseClaims(token)
+                .get(ID_CLAIM_NAME, Long.class);
     }
 
     private Claims parseClaims(String token) {
@@ -105,30 +113,17 @@ public final class JwtUtils {
                 .getPayload();
     }
 
-    public String getSecret() {
-        return secret;
-    }
-
     public void setSecret(String secret) {
         this.secret = secret;
-    }
-
-    public Duration getLifetime() {
-        return lifetime;
     }
 
     public void setLifetime(Duration lifetime) {
         this.lifetime = lifetime;
     }
 
-    public String getIssuer() {
-        return issuer;
-    }
-
     public void setIssuer(String issuer) {
         this.issuer = issuer;
     }
-
     public void setRefreshLifetime(Duration refreshLifetime) {
         this.refreshLifetime = refreshLifetime;
     }

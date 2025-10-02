@@ -3,6 +3,7 @@ package com.myrr.CloudStorage.controller;
 import com.fasterxml.jackson.annotation.JsonView;
 import com.myrr.CloudStorage.domain.dto.TokenResponseDto;
 import com.myrr.CloudStorage.domain.dto.UserDto;
+import com.myrr.CloudStorage.security.JwtEntity;
 import com.myrr.CloudStorage.service.AuthService;
 import com.myrr.CloudStorage.utils.jsonmarkers.PrivateView;
 import com.myrr.CloudStorage.utils.jwt.JwtUtils;
@@ -13,12 +14,12 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.util.UriComponents;
 import org.springframework.web.util.UriComponentsBuilder;
-
-import java.security.Principal;
 
 @RestController
 @RequestMapping("/api/auth")
@@ -27,8 +28,7 @@ public class AuthController {
     private final AuthService authService;
 
     @Autowired
-    public AuthController(AuthService authService,
-                          JwtUtils jwtUtils) {
+    public AuthController(AuthService authService) {
         this.authService = authService;
     }
 
@@ -62,10 +62,15 @@ public class AuthController {
 
     @GetMapping("/me")
     @JsonView(PrivateView.class)
-    public ResponseEntity<UserDto> getMe(Principal principal) {
+    public ResponseEntity<JwtEntity> getMe(@AuthenticationPrincipal UserDetails userDetails) {
         return ResponseEntity
-                .ok(this.authService.getMe(principal));
+                .ok(jwtEntity);
     }
 
-
+    @PostMapping("/logout")
+    public ResponseEntity<Void> logout(@RequestBody String refresh) {
+        this.authService.logout(refresh);
+        return ResponseEntity.ok()
+                .build();
+    }
 }

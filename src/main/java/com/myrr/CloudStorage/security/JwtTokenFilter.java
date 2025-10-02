@@ -12,6 +12,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
@@ -22,11 +23,11 @@ import java.io.IOException;
 @Component
 public class JwtTokenFilter extends OncePerRequestFilter {
     private static final Logger LOGGER = LoggerFactory.getLogger(JwtTokenFilter.class);
-    private final JwtUtils jwtUtils;
+    private final JwtTokenAuthenticationProvider authenticationProvider;
 
     @Autowired
-    public JwtTokenFilter(JwtUtils jwtUtils) {
-        this.jwtUtils = jwtUtils;
+    public JwtTokenFilter(JwtTokenAuthenticationProvider authenticationProvider) {
+        this.authenticationProvider = authenticationProvider;
     }
 
     @Override
@@ -42,19 +43,8 @@ public class JwtTokenFilter extends OncePerRequestFilter {
 
         if (jwt != null) {
             try {
-                String username = jwtUtils.getUsername(jwt);
-                if (username != null && SecurityContextHolder.getContext().getAuthentication() == null) {
-                    UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(
-                            username,
-                            null,
-                            jwtUtils.getRoles(jwt)
-                                    .stream()
-                                    .map(SimpleGrantedAuthority::new)
-                                    .toList()
-                    );
-
-                    SecurityContextHolder.getContext().setAuthentication(authentication);
-                }
+                Authentication authentication = authenticationProvider.getAuthentication(jwt);
+                SecurityContextHolder.getContext().setAuthentication(authentication);
             } catch (ExpiredJwtException exception) {
                 LOGGER.info("Jwt token is expired");
             } catch (SignatureException exception) {

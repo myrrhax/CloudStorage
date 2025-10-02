@@ -7,6 +7,7 @@ import com.myrr.CloudStorage.domain.enums.RoleType;
 import com.myrr.CloudStorage.domain.exceptions.conflict.UsernameOrEmailAlreadyExistsException;
 import com.myrr.CloudStorage.domain.exceptions.notfound.UserNotFoundException;
 import com.myrr.CloudStorage.repository.UserRepository;
+import com.myrr.CloudStorage.security.JwtEntity;
 import com.myrr.CloudStorage.service.RoleService;
 import com.myrr.CloudStorage.service.UserService;
 import com.myrr.CloudStorage.utils.jwt.JwtUtils;
@@ -14,6 +15,7 @@ import com.myrr.CloudStorage.utils.mapping.UserMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
@@ -28,20 +30,14 @@ import java.util.Optional;
 @Transactional
 public class UserServiceImpl implements UserService, UserDetailsService {
     private final UserMapper userMapper;
-    private final RoleService roleService;
     private final UserRepository userRepository;
-    private final PasswordEncoder passwordEncoder;
     private static final Logger LOGGER = LoggerFactory.getLogger(UserServiceImpl.class);
 
     @Autowired
     public UserServiceImpl(UserMapper userMapper,
-                           RoleService roleService,
-                           UserRepository userRepository,
-                           PasswordEncoder passwordEncoder, JwtUtils jwtUtils) {
+                           UserRepository userRepository) {
         this.userMapper = userMapper;
-        this.roleService = roleService;
         this.userRepository = userRepository;
-        this.passwordEncoder = passwordEncoder;
     }
 
     @Override
@@ -64,14 +60,16 @@ public class UserServiceImpl implements UserService, UserDetailsService {
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
         User user = userRepository.findByName(username)
                 .orElseThrow(() -> new UsernameNotFoundException(username));
-        return org.springframework.security.core.userdetails.User
-                .builder()
-                .username(user.getName())
-                .password(user.getPassword())
-                .roles(user.getRoles()
-                        .stream()
-                        .map(role -> role.getRole().name())
-                        .toArray(String[]::new))
-                .build();
+
+        return new JwtEntity(
+            user.getId(),
+            user.getName(),
+            user.getPassword(),
+            user.getRoles()
+                    .stream()
+                    .map(role -> role.getRole().name())
+                    .map(SimpleGrantedAuthority::new)
+                    .toList()
+        );
     }
 }

@@ -33,8 +33,8 @@ public class AuthServiceImpl implements AuthService {
     private final UserMapper userMapper;
     private final RefreshTokenService refreshTokenService;
     private final UserRepository userRepository;
-    private PasswordEncoder passwordEncoder;
-    private RoleServiceImpl roleService;
+    private final PasswordEncoder passwordEncoder;
+    private final RoleServiceImpl roleService;
 
     @Autowired
     public AuthServiceImpl(AuthenticationManager authenticationManager, JwtUtils jwtUtils, UserMapper userMapper, RefreshTokenService refreshTokenService, UserRepository userRepository, PasswordEncoder passwordEncoder, RoleServiceImpl roleService) {
@@ -74,8 +74,10 @@ public class AuthServiceImpl implements AuthService {
     }
 
     @Override
-    public void logout() {
-
+    public void logout(String refresh) {
+        RefreshToken token = this.refreshTokenService.getToken(refresh)
+                .orElseThrow(InvalidRefreshTokenException::new);
+        this.refreshTokenService.delete(token);
     }
 
     @Override
