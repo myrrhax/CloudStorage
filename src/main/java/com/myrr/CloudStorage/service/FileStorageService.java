@@ -13,5 +13,5 @@ public interface FileStorageService {
                              String filename,
                              String parentDirectoryId);
     FileMetadata getFileMetadata(UUID fileId);
-    InputStream downloadFile(UUID fileId, Long userId);
+    FileDto downloadFile(UUID fileId);
 }

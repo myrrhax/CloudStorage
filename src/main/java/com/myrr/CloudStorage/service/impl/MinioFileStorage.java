@@ -7,33 +7,32 @@ import com.myrr.CloudStorage.domain.enums.FileType;
 import com.myrr.CloudStorage.domain.exceptions.UnableToLoadFileException;
 import com.myrr.CloudStorage.domain.exceptions.badrequest.FileCannotBeNullException;
 import com.myrr.CloudStorage.domain.exceptions.badrequest.InvalidFileExtensionException;
-import com.myrr.CloudStorage.domain.exceptions.badrequest.InvalidFilePathException;
 import com.myrr.CloudStorage.domain.exceptions.badrequest.InvalidParentException;
 import com.myrr.CloudStorage.domain.exceptions.conflict.FileAlreadyExistsException;
+import com.myrr.CloudStorage.domain.exceptions.notfound.ApplicationFileNotFoundException;
 import com.myrr.CloudStorage.domain.exceptions.notfound.DirectoryNotFoundException;
 import com.myrr.CloudStorage.domain.exceptions.notfound.UserNotFoundException;
 import com.myrr.CloudStorage.repository.FileMetadataRepository;
 import com.myrr.CloudStorage.repository.UserRepository;
 import com.myrr.CloudStorage.service.FileStorageService;
-import com.myrr.CloudStorage.service.UserService;
 import com.myrr.CloudStorage.utils.MinioProperties;
+import io.minio.GetObjectArgs;
 import io.minio.MinioClient;
 import io.minio.PutObjectArgs;
 import jakarta.annotation.PostConstruct;
-import jakarta.persistence.PersistenceException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.dao.DataAccessException;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.util.UriComponentsBuilder;
 
 import java.io.InputStream;
-import java.sql.SQLException;
-import java.util.*;
+import java.util.Set;
+import java.util.UUID;
 
 @Service
 @Transactional
@@ -84,12 +83,21 @@ public class MinioFileStorage implements FileStorageService {
 
         if (filename == null || filename.isBlank()) {
             filename = file.getOriginalFilename();
+        } else {
+            try {
+                 getExtension(filename);
+            } catch (InvalidFileExtensionException ex) {
+                if (file.getOriginalFilename() == null)
+                    throw ex;
+
+                filename = filename + getExtension(file.getOriginalFilename());
+            }
         }
 
         final UUID usedDirectoryId = parentDirectoryId == null || parentDirectoryId.isBlank()
                 ? UUID.fromString(EMPTY_UUID_PATTERN)
                 : UUID.fromString(parentDirectoryId);
-        String name = FILE_PATTERN.formatted(userId, usedDirectoryId, filename);
+
         User user = this.userRepository.findById(userId)
                 .orElseThrow(() -> new UserNotFoundException(userId));
 
@@ -105,15 +113,16 @@ public class MinioFileStorage implements FileStorageService {
         FileMetadata metadata = new FileMetadata(filename, FileType.FILE, user, parent, file.getSize());
 
         try {
-            this.fileMetadataRepository.save(metadata);
-
+            FileMetadata savedEntity = this.fileMetadataRepository.save(metadata);
+            this.fileMetadataRepository.flush();
+            String name = FILE_PATTERN.formatted(userId, usedDirectoryId, savedEntity.getId().toString());
             this.minioClient.putObject(PutObjectArgs.builder()
                     .object(name)
                     .contentType(file.getContentType())
                     .stream(file.getInputStream(), file.getSize(), -1)
                     .bucket(this.minioProperties.getFilesBucket())
                     .build());
-        } catch (DataAccessException | PersistenceException ex) {
+        } catch (DataIntegrityViolationException ex) {
             log.error("File already exists ", ex);
             throw new FileAlreadyExistsException();
         } catch (Exception ex) {
@@ -132,23 +141,55 @@ public class MinioFileStorage implements FileStorageService {
 
     @Override
     public FileMetadata getFileMetadata(UUID fileId) {
-        return null;
+        return this.fileMetadataRepository.findById(fileId)
+                .orElseThrow(() -> new ApplicationFileNotFoundException(fileId));
     }
 
     @Override
-    public InputStream downloadFile(UUID fileId, Long userId) {
-        return null;
+    public FileDto downloadFile(UUID fileId) {
+        FileMetadata fileMetadata = getFileMetadata(fileId);
+        String parentId = fileMetadata.getParent() == null
+                ? EMPTY_UUID_PATTERN
+                : fileMetadata.getParent().getId().toString();
+        String minioName = String.format(FILE_PATTERN,
+                fileMetadata.getOwner().getId(),
+                parentId,
+                fileMetadata.getId().toString());
+
+        log.info("Trying to get: {} file", minioName);
+        try {
+            InputStream stream = this.minioClient
+                    .getObject(GetObjectArgs.builder()
+                            .bucket(minioProperties.getFilesBucket())
+                            .object(minioName)
+                            .build());
+
+            return new FileDto(fileMetadata.getId(),
+                    fileMetadata.getName(),
+                    fileMetadata.getType(),
+                    stream);
+
+        } catch (Exception e) {
+            log.error("Unable to get file", e);
+            throw new UnableToLoadFileException();
+        }
+
+    }
+
+    private static String getExtension(String name) {
+        int lastPointIndex = name.indexOf('.');
+        if (lastPointIndex == -1 || lastPointIndex == name.length() - 1)
+            throw new InvalidFileExtensionException();
+
+        return name.substring(lastPointIndex);
     }
 
     private void validateFileExtension(MultipartFile file) {
         if (file == null || file.getOriginalFilename() == null) {
             throw new FileCannotBeNullException();
         }
-        int lastPointIndex = file.getOriginalFilename().indexOf('.');
-        if (lastPointIndex == -1 || lastPointIndex == file.getOriginalFilename().length() - 1)
-            throw new InvalidFileExtensionException();
 
-        String extension = file.getOriginalFilename().substring(lastPointIndex);
+        String extension = getExtension(file.getOriginalFilename());
         if (!validFileExtensions.contains(extension))
             throw new InvalidFileExtensionException();
     }

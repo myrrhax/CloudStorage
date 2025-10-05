@@ -4,18 +4,22 @@ import com.myrr.CloudStorage.domain.dto.FileDto;
 import com.myrr.CloudStorage.security.JwtEntity;
 import com.myrr.CloudStorage.service.FileStorageService;
 import com.myrr.CloudStorage.utils.validation.validator.NullableUUID;
-import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
-import jakarta.validation.constraints.Null;
 import org.hibernate.validator.constraints.UUID;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.io.InputStreamResource;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
+import org.springframework.http.MediaTypeFactory;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.io.InputStream;
 import java.net.URI;
 
 @RestController
@@ -29,7 +33,7 @@ public class FileController {
         this.fileStorageService = fileStorageService;
     }
 
-    @PostMapping("")
+    @PostMapping
     public ResponseEntity<FileDto> loadFile(@RequestPart("file") @NotNull MultipartFile file,
                                             @RequestParam("parent") @NullableUUID String parentDirectoryId,
                                             @RequestParam("displayName") String displayName,
@@ -38,7 +42,7 @@ public class FileController {
         JwtEntity jwtEntity = (JwtEntity) userDetails;
         long userId = jwtEntity.getId();
 
-        FileDto dto = this.fileStorageService.loadFile(file,
+        FileDto dto = this.fileStorageService.loadFileToServer(file,
                 userId,
                 displayName,
                 parentDirectoryId);
@@ -46,6 +50,19 @@ public class FileController {
         return ResponseEntity
                 .created(URI.create(dto.getUrl()))
                 .body(dto);
+    }
+
+    @GetMapping("/{id}")
+    @PreAuthorize("@fileSecurity.hasAccessToFile(#id, authentication)")
+    public ResponseEntity<InputStreamResource> downloadFile(@PathVariable @UUID String id) {
+        FileDto fileDto = this.fileStorageService.downloadFile(java.util.UUID.fromString(id));
+        MediaType mediaType = MediaTypeFactory.getMediaType(fileDto.getName())
+                .orElse(MediaType.APPLICATION_OCTET_STREAM);
+
+        return ResponseEntity.ok()
+                .contentType(mediaType)
+                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + id + "\"")
+                .body(new InputStreamResource(fileDto.getFileStream()));
     }
 
     @PostMapping("/avatar")
