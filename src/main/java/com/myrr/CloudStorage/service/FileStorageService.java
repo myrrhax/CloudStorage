@@ -1,14 +1,17 @@
 package com.myrr.CloudStorage.service;
 
 import com.myrr.CloudStorage.domain.dto.FileDto;
+import com.myrr.CloudStorage.domain.entity.FileMetadata;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.util.Optional;
+import java.io.InputStream;
 import java.util.UUID;
 
 public interface FileStorageService {
-    FileDto loadFile(MultipartFile file,
-                     Long userId,
-                     String filename,
-                     String parentDirectoryId);
+    FileDto loadFileToServer(MultipartFile file,
+                             Long userId,
+                             String filename,
+                             String parentDirectoryId);
+    FileMetadata getFileMetadata(UUID fileId);
+    InputStream downloadFile(UUID fileId, Long userId);
 }

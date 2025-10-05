@@ -31,6 +31,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.util.UriComponentsBuilder;
 
+import java.io.InputStream;
 import java.sql.SQLException;
 import java.util.*;
 
@@ -72,10 +73,10 @@ public class MinioFileStorage implements FileStorageService {
     }
 
     @Override
-    public FileDto loadFile(MultipartFile file,
-                            Long userId,
-                            String filename,
-                            String parentDirectoryId) {
+    public FileDto loadFileToServer(MultipartFile file,
+                                    Long userId,
+                                    String filename,
+                                    String parentDirectoryId) {
         if (file == null || file.getSize() == 0) {
             throw new FileCannotBeNullException();
         }
@@ -127,6 +128,16 @@ public class MinioFileStorage implements FileStorageService {
                         .buildAndExpand(metadata.getId())
                         .toUriString(),
                 FileType.FILE);
+    }
+
+    @Override
+    public FileMetadata getFileMetadata(UUID fileId) {
+        return null;
+    }
+
+    @Override
+    public InputStream downloadFile(UUID fileId, Long userId) {
+        return null;
     }
 
     private void validateFileExtension(MultipartFile file) {
