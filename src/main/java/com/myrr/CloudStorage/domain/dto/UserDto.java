@@ -4,15 +4,14 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonView;
 import com.myrr.CloudStorage.utils.jsonmarkers.PrivateView;
 import com.myrr.CloudStorage.utils.jsonmarkers.PublicView;
-import com.myrr.CloudStorage.utils.validation.Login;
-import com.myrr.CloudStorage.utils.validation.OnCreate;
-import com.myrr.CloudStorage.utils.validation.OnUpdate;
+import com.myrr.CloudStorage.utils.validation.markers.Login;
+import com.myrr.CloudStorage.utils.validation.markers.OnCreate;
+import com.myrr.CloudStorage.utils.validation.markers.OnUpdate;
 import jakarta.validation.constraints.*;
 import jakarta.validation.groups.Default;
 import org.hibernate.validator.constraints.URL;
 
 import java.util.Set;
-import java.util.UUID;
 
 public record UserDto (
     @JsonProperty(value = "id")

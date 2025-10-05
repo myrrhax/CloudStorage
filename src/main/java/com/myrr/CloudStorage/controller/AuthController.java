@@ -1,23 +1,20 @@
 package com.myrr.CloudStorage.controller;
 
-import com.fasterxml.jackson.annotation.JsonView;
 import com.myrr.CloudStorage.domain.dto.TokenResponseDto;
 import com.myrr.CloudStorage.domain.dto.UserDto;
-import com.myrr.CloudStorage.security.JwtEntity;
 import com.myrr.CloudStorage.service.AuthService;
-import com.myrr.CloudStorage.utils.jsonmarkers.PrivateView;
-import com.myrr.CloudStorage.utils.jwt.JwtUtils;
-import com.myrr.CloudStorage.utils.validation.Login;
-import com.myrr.CloudStorage.utils.validation.OnCreate;
+import com.myrr.CloudStorage.utils.validation.markers.Login;
+import com.myrr.CloudStorage.utils.validation.markers.OnCreate;
 import jakarta.validation.groups.Default;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.validation.annotation.Validated;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.util.UriComponents;
 import org.springframework.web.util.UriComponentsBuilder;
 

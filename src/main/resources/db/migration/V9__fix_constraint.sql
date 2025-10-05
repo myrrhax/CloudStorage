@@ -1,0 +1,2 @@
+ALTER TABLE files_metadata
+DROP CONSTRAINT files_metadata_file_type_check;

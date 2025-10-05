@@ -9,15 +9,25 @@ spring:
     hibernate:
       ddl-auto: validate
 
+  servlet:
+    multipart:
+      max-file-size: 256MB
+      max-request-size: 256MB
+
+server:
+  port: 8000
+
 jwt:
-  lifetime: 5m
+  lifetime: 1d
   issuer: localhost:8000
   refreshLifetime: 30d
 
 minio:
   endpoint: http://localhost:9000
-  avatar.bucket: avatars
-  users.bucket: users
+  avatarBucket: avatars
+  filesBucket: users
 
-server:
-  port: 8000
+file:
+  server.path: http://localhost:8000/api/files/
+  storage:
+    extensions: .jpg,.png,.pdf,.txt,.jpeg

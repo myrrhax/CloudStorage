@@ -13,12 +13,6 @@ import java.util.stream.Collectors;
 public class UserMapper {
     @Value("file.server.path")
     private String fileServerPath;
-    private final UriComponentsBuilder componentsBuilder;
-
-    @Autowired
-    public UserMapper(UriComponentsBuilder componentsBuilder) {
-        this.componentsBuilder = componentsBuilder;
-    }
 
     public UserDto toDto(User user) {
         return new UserDto(
@@ -31,10 +25,7 @@ public class UserMapper {
                         .collect(Collectors.toSet()),
                 user.getConfirmed(),
                 user.getAvatar() != null
-                        ? this.componentsBuilder
-                            .path(fileServerPath)
-                            .buildAndExpand(user.getAvatar().getId())
-                            .toUriString()
+                        ? fileServerPath + user.getAvatar().getId()
                         : null
         );
     }
@@ -45,5 +36,9 @@ public class UserMapper {
             dto.email(),
             dto.password()
         );
+    }
+
+    public void setFileServerPath(String fileServerPath) {
+        this.fileServerPath = fileServerPath;
     }
 }
