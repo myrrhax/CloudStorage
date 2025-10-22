@@ -34,16 +34,6 @@ public class FileDto {
         this.fileType = fileType;
     }
 
-    public FileDto(UUID id,
-                   String name,
-                   FileType fileType,
-                   InputStream fileStream) {
-        this.id = id;
-        this.name = name;
-        this.fileType = fileType;
-        this.fileStream = fileStream;
-    }
-
     public UUID getId() {
         return id;
     }

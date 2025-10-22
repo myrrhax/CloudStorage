@@ -1,8 +1,10 @@
 package com.myrr.CloudStorage.controller;
 
+import com.fasterxml.jackson.annotation.JsonView;
 import com.myrr.CloudStorage.domain.dto.UserDto;
 import com.myrr.CloudStorage.security.JwtEntity;
 import com.myrr.CloudStorage.service.UserService;
+import com.myrr.CloudStorage.utils.jsonmarkers.PrivateView;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -22,6 +24,7 @@ public class UserController {
     }
 
     @GetMapping("/me")
+    @JsonView(PrivateView.class)
     public ResponseEntity<UserDto> me(@AuthenticationPrincipal UserDetails userDetails) {
         JwtEntity providedDetails = (JwtEntity) userDetails;
 

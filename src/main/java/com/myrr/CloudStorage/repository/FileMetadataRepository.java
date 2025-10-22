@@ -8,5 +8,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import java.util.UUID;
 
 public interface FileMetadataRepository extends JpaRepository<FileMetadata, UUID> {
-    Page<FileMetadata> findAllByParentId(UUID parentId, Pageable pageable);
+    Page<FileMetadata> findAllByParentIdAndOwnerId(UUID parentId,
+                                                   long ownerId,
+                                                   Pageable pageable);
 }

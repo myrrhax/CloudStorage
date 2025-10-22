@@ -1,9 +1,11 @@
 package com.myrr.CloudStorage.controller;
 
+import com.fasterxml.jackson.annotation.JsonView;
 import com.myrr.CloudStorage.domain.dto.CreateDirectoryDto;
 import com.myrr.CloudStorage.domain.dto.FileDto;
 import com.myrr.CloudStorage.security.JwtEntity;
 import com.myrr.CloudStorage.service.FileStorageService;
+import com.myrr.CloudStorage.utils.jsonmarkers.DirectoryView;
 import com.myrr.CloudStorage.utils.validation.validator.NullableUUID;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -13,6 +15,7 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 
+import java.io.File;
 import java.net.URI;
 
 @RestController
@@ -33,6 +36,7 @@ public class DirectoryController {
         long userId = jwtEntity.getId();
 
         FileDto dto = this.fileStorageService.createDirectory(createDirectoryDto.name(),
+                createDirectoryDto.parentId(),
                 userId);
 
         return ResponseEntity
@@ -43,12 +47,17 @@ public class DirectoryController {
     @GetMapping("{id}")
     @PreAuthorize("@fileSecurity.hasAccessToFile(#id, authentication)")
     public ResponseEntity<Page<FileDto>> lookupDirectory(@PathVariable @NullableUUID String id,
-                                                         @RequestParam int page,
-                                                         @RequestParam int pageSize) {
-        Page<FileDto> files = this.fileStorageService.lookupDirectory(id,
+                                                      @RequestParam int page,
+                                                      @RequestParam int pageSize,
+                                                      @AuthenticationPrincipal UserDetails userDetails) {
+        JwtEntity jwtEntity = (JwtEntity) userDetails;
+        long userId = jwtEntity.getId();
+
+        Page<FileDto> fileData = this.fileStorageService.lookupDirectory(id,
+                userId,
                 page,
                 pageSize);
 
-        return ResponseEntity.ok(files);
+        return ResponseEntity.ok(fileData);
     }
 }

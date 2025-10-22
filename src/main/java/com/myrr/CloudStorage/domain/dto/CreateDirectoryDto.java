@@ -1,4 +1,9 @@
 package com.myrr.CloudStorage.domain.dto;
 
-public record CreateDirectoryDto(String name) {
+import com.myrr.CloudStorage.utils.validation.validator.NullableUUID;
+
+import java.util.UUID;
+
+public record CreateDirectoryDto(String name,
+                                 @NullableUUID String parentId) {
 }

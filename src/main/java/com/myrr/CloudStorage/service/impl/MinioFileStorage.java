@@ -10,7 +10,6 @@ import com.myrr.CloudStorage.domain.exceptions.badrequest.InvalidFileExtensionEx
 import com.myrr.CloudStorage.domain.exceptions.badrequest.InvalidParentException;
 import com.myrr.CloudStorage.domain.exceptions.conflict.FileAlreadyExistsException;
 import com.myrr.CloudStorage.domain.exceptions.notfound.ApplicationFileNotFoundException;
-import com.myrr.CloudStorage.domain.exceptions.notfound.DirectoryNotFoundException;
 import com.myrr.CloudStorage.domain.exceptions.notfound.FilesNotFoundException;
 import com.myrr.CloudStorage.domain.exceptions.notfound.UserNotFoundException;
 import com.myrr.CloudStorage.fabric.FileMetadataFabric;
@@ -35,6 +34,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.InputStream;
+import java.util.Optional;
 import java.util.UUID;
 
 @Service
@@ -90,23 +90,19 @@ public class MinioFileStorage implements FileStorageService {
         User user = this.userRepository.findById(userId)
                 .orElseThrow(() -> new UserNotFoundException(userId));
 
-        FileMetadata parent = usedDirectoryId.equals(UUID.fromString(FileStorageExtensions.EMPTY_UUID_PATTERN))
-                ? null
-                : this.fileMetadataRepository.findById(usedDirectoryId)
-                    .orElseThrow(() -> new DirectoryNotFoundException(usedDirectoryId));
+        Optional<FileMetadata> parent = getParentById(usedDirectoryId);
+        validateParentType(parent);
 
-        if (parent != null && !parent.getType().equals(FileType.DIRECTORY)) {
-            throw new InvalidParentException();
-        }
-
-        FileMetadata metadata = new FileMetadata(filename, FileType.FILE, user, parent, file.getSize());
+        FileMetadata metadata = new FileMetadata(filename,
+                FileType.FILE,
+                user,
+                parent.orElse(null),
+                file.getSize());
 
         try {
-            FileMetadata savedEntity = this.fileMetadataRepository.save(metadata);
-            this.fileMetadataRepository.flush();
+            FileMetadata savedEntity = this.fileMetadataRepository.saveAndFlush(metadata);
             String name = this.fileStorageExtensions.getFileName(userId,
-                    savedEntity.getId().toString(),
-                    usedDirectoryId);
+                    savedEntity.getId().toString());
             this.minioClient.putObject(PutObjectArgs.builder()
                     .object(name)
                     .contentType(file.getContentType())
@@ -133,13 +129,10 @@ public class MinioFileStorage implements FileStorageService {
     @Override
     public FileDto downloadFile(UUID fileId) {
         FileMetadata fileMetadata = getFileMetadata(fileId);
-        String parentId = fileMetadata.getParent() == null
-                ? FileStorageExtensions.EMPTY_UUID_PATTERN
-                : fileMetadata.getParent().getId().toString();
-        String minioName = String.format(FileStorageExtensions.FILE_PATTERN,
-                fileMetadata.getOwner().getId(),
-                parentId,
-                fileMetadata.getId().toString());
+        String minioName = this.fileStorageExtensions.getFileName(
+            fileMetadata.getOwner().getId(),
+            fileMetadata.getId().toString()
+        );
 
         log.info("Trying to get: {} file", minioName);
         try {
@@ -149,10 +142,7 @@ public class MinioFileStorage implements FileStorageService {
                             .object(minioName)
                             .build());
 
-            return new FileDto(fileMetadata.getId(),
-                    fileMetadata.getName(),
-                    fileMetadata.getType(),
-                    stream);
+            return this.metadataFabric.convert(fileMetadata, stream);
 
         } catch (Exception e) {
             log.error("Unable to get file", e);
@@ -161,21 +151,58 @@ public class MinioFileStorage implements FileStorageService {
     }
 
     @Override
-    public FileDto createDirectory(String directoryName, long userId) {
-        return null;
+    public FileDto createDirectory(String directoryName, String parentId, long userId) {
+        User user = this.userRepository.findById(userId)
+                .orElseThrow(() -> new UserNotFoundException(userId));
+
+        UUID parentUuid = this.fileStorageExtensions.parseNullableUUID(parentId);
+        Optional<FileMetadata> parentMetadata = getParentById(parentUuid);
+        validateParentType(parentMetadata);
+
+        FileMetadata metadata = new FileMetadata(directoryName,
+                FileType.DIRECTORY,
+                user,
+                parentMetadata.orElse(null),
+                0);
+        try {
+            this.fileMetadataRepository.saveAndFlush(metadata);
+
+            log.info("New directory {} for user {} was created", directoryName, userId);
+            return this.metadataFabric.convert(metadata);
+        } catch (Exception ex) {
+            log.error("An error occurred directory creation for user {}",
+                    userId, ex);
+            throw new FileAlreadyExistsException();
+        }
     }
 
     @Override
-    public Page<FileDto> lookupDirectory(String directoryId, int page, int pageSize) {
+    public Page<FileDto> lookupDirectory(String directoryId, long ownerId, int page, int pageSize) {
         Pageable pageRequest = PageRequest.of(page, pageSize, Sort.by("name"));
+        UUID parentId = this.fileStorageExtensions.parseNullableUUID(directoryId);
 
-        Page<FileMetadata> result = this.fileMetadataRepository.findAllByParentId(
-                this.fileStorageExtensions.parseNullableUUID(directoryId),
+        Optional<FileMetadata> parent = getParentById(parentId);
+        validateParentType(parent);
+
+        Page<FileMetadata> result = this.fileMetadataRepository.findAllByParentIdAndOwnerId(
+                parent.isPresent() ? parentId : null,
+                ownerId,
                 pageRequest);
 
-        if (result.getTotalElements() == 0 || result.getSize() == 0)
+        if (result.isEmpty())
             throw new FilesNotFoundException();
 
         return result.map(this.metadataFabric::convert);
+    }
+
+    private Optional<FileMetadata> getParentById(UUID usedDirectoryId) {
+        return usedDirectoryId.equals(UUID.fromString(FileStorageExtensions.EMPTY_UUID_PATTERN))
+                ? Optional.empty()
+                : this.fileMetadataRepository.findById(usedDirectoryId);
+    }
+
+    private static void validateParentType(Optional<FileMetadata> parentMetadata) {
+        if (parentMetadata.isPresent() && !parentMetadata.get().getType().equals(FileType.DIRECTORY))
+            throw new InvalidParentException();
     }
 }

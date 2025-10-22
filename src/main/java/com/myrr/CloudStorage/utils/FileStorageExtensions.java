@@ -12,7 +12,7 @@ import java.util.UUID;
 @Component
 public class FileStorageExtensions {
     public static final String EMPTY_UUID_PATTERN = "00000000-0000-0000-0000-000000000000";
-    public static final String FILE_PATTERN = "%d/%s/%s";
+    public static final String FILE_PATTERN = "%d/%s";
 
     @Value("${file.storage.extensions}")
     private Set<String> validFileExtensions;
@@ -41,8 +41,8 @@ public class FileStorageExtensions {
                 : UUID.fromString(uuid);
     }
 
-    public String getFileName(Long userId, String fileName, UUID parent) {
-        return String.format(FILE_PATTERN, userId, parent, fileName);
+    public String getFileName(Long userId, String fileName) {
+        return String.format(FILE_PATTERN, userId, fileName);
     }
 
     public void setValidFileExtensions(Set<String> validFileExtensions) {

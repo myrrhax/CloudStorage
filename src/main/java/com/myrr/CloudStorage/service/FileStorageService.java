@@ -14,6 +14,6 @@ public interface FileStorageService {
                              String parentDirectoryId);
     FileMetadata getFileMetadata(UUID fileId);
     FileDto downloadFile(UUID fileId);
-    FileDto createDirectory(String directoryName, long userId);
-    Page<FileDto> lookupDirectory(String directoryId, int page, int pageSize);
+    FileDto createDirectory(String directoryName, String parentId, long userId);
+    Page<FileDto> lookupDirectory(String directoryId, long ownerId, int page, int pageSize);
 }

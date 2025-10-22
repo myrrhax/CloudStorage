@@ -3,6 +3,7 @@ package com.myrr.CloudStorage.security.expression;
 import com.myrr.CloudStorage.domain.entity.FileMetadata;
 import com.myrr.CloudStorage.security.JwtEntity;
 import com.myrr.CloudStorage.service.FileStorageService;
+import com.myrr.CloudStorage.utils.FileStorageExtensions;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Component;
@@ -27,6 +28,10 @@ public class FileSecurity {
         if (user == null)
             return false;
         Long userId = user.getId();
+
+        if (fileId.toString().equals(FileStorageExtensions.EMPTY_UUID_PATTERN))
+            return true;
+
         FileMetadata metadata = this.fileStorageService.getFileMetadata(fileId);
 
         return metadata.getOwner().getId().equals(userId);
