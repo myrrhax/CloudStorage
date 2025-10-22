@@ -12,6 +12,7 @@ public interface FileStorageService {
                              Long userId,
                              String filename,
                              String parentDirectoryId);
+    FileDto updateFileMetadata(FileDto updatedDto);
     FileMetadata getFileMetadata(UUID fileId);
     FileDto downloadFile(UUID fileId);
     FileDto createDirectory(String directoryName, String parentId, long userId);

@@ -5,14 +5,11 @@ import com.myrr.CloudStorage.domain.entity.FileMetadata;
 import com.myrr.CloudStorage.domain.enums.FileType;
 import com.myrr.CloudStorage.fabric.FileMetadataFabric;
 import com.myrr.CloudStorage.utils.FileStorageExtensions;
-import org.jetbrains.annotations.NotNull;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Component;
 import org.springframework.web.util.UriComponentsBuilder;
 
 import java.io.InputStream;
-import java.util.UUID;
 
 @Component
 public class FileMetadataDefaultImpl implements FileMetadataFabric {
@@ -25,7 +22,10 @@ public class FileMetadataDefaultImpl implements FileMetadataFabric {
         return new FileDto(metadata.getId(),
                 metadata.getName(),
                 getFileUrl(metadata),
-                metadata.getType());
+                metadata.getType(),
+                metadata.getOwner().getId(),
+                metadata.getParent() == null ? FileStorageExtensions.EMPTY_UUID : metadata.getParent().getId()
+        );
     }
 
     @Override
@@ -34,14 +34,6 @@ public class FileMetadataDefaultImpl implements FileMetadataFabric {
         dto.setFileStream(inputStream);
 
         return dto;
-    }
-
-    @NotNull
-    private static FileDto getParentDirectoryPlaceholder() {
-        return new FileDto(UUID.fromString(FileStorageExtensions.EMPTY_UUID_PATTERN),
-                "",
-                "",
-                FileType.DIRECTORY);
     }
 
     private String getFileUrl(FileMetadata metadata) {

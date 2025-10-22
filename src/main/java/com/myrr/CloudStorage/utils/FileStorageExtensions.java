@@ -12,6 +12,7 @@ import java.util.UUID;
 @Component
 public class FileStorageExtensions {
     public static final String EMPTY_UUID_PATTERN = "00000000-0000-0000-0000-000000000000";
+    public static final UUID EMPTY_UUID = UUID.fromString(EMPTY_UUID_PATTERN);
     public static final String FILE_PATTERN = "%d/%s";
 
     @Value("${file.storage.extensions}")
@@ -37,7 +38,7 @@ public class FileStorageExtensions {
 
     public UUID parseNullableUUID(String uuid) {
          return uuid == null || uuid.isBlank()
-                ? UUID.fromString(EMPTY_UUID_PATTERN)
+                ? EMPTY_UUID
                 : UUID.fromString(uuid);
     }
 

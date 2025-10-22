@@ -62,11 +62,16 @@ public class FileController {
 
         return ResponseEntity.ok()
                 .contentType(mediaType)
-                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + id + "\"")
+                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + fileDto.getName() + "\"")
                 .body(new InputStreamResource(fileDto.getFileStream()));
     }
 
+    @PutMapping
+    public ResponseEntity<FileDto> updateFile(@RequestBody FileDto dto) {
+        FileDto result = this.fileStorageService.updateFileMetadata(dto);
 
+        return ResponseEntity.ok(result);
+    }
 
     @PostMapping("/avatar")
     public ResponseEntity<String> loadAvatar(@RequestPart @NotNull MultipartFile file,

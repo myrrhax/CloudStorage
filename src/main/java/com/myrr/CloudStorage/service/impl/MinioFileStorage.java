@@ -121,6 +121,24 @@ public class MinioFileStorage implements FileStorageService {
     }
 
     @Override
+    public FileDto updateFileMetadata(FileDto updatedDto) {
+        FileMetadata metadata = this.fileMetadataRepository.findById(updatedDto.getId())
+                .orElseThrow(FilesNotFoundException::new);
+        FileMetadata newParent = this.fileMetadataRepository.findById(updatedDto.getParentId())
+                        .orElseThrow(FilesNotFoundException::new);
+
+        try {
+            metadata.setName(updatedDto.getName());
+            metadata.setParent(newParent);
+            this.fileMetadataRepository.flush();
+
+            return this.metadataFabric.convert(metadata);
+        } catch (Exception ex) {
+            throw new FileAlreadyExistsException();
+        }
+    }
+
+    @Override
     public FileMetadata getFileMetadata(UUID fileId) {
         return this.fileMetadataRepository.findById(fileId)
                 .orElseThrow(() -> new ApplicationFileNotFoundException(fileId));
@@ -196,7 +214,7 @@ public class MinioFileStorage implements FileStorageService {
     }
 
     private Optional<FileMetadata> getParentById(UUID usedDirectoryId) {
-        return usedDirectoryId.equals(UUID.fromString(FileStorageExtensions.EMPTY_UUID_PATTERN))
+        return usedDirectoryId.equals(FileStorageExtensions.EMPTY_UUID)
                 ? Optional.empty()
                 : this.fileMetadataRepository.findById(usedDirectoryId);
     }
