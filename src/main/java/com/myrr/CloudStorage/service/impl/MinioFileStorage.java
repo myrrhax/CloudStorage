@@ -161,6 +161,11 @@ public class MinioFileStorage implements FileStorageService {
     }
 
     @Override
+    public FileDto createDirectory(String directoryName, long userId) {
+        return null;
+    }
+
+    @Override
     public Page<FileDto> lookupDirectory(String directoryId, int page, int pageSize) {
         Pageable pageRequest = PageRequest.of(page, pageSize, Sort.by("name"));
 

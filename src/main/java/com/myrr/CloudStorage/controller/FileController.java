@@ -66,23 +66,11 @@ public class FileController {
                 .body(new InputStreamResource(fileDto.getFileStream()));
     }
 
-    @GetMapping("directories/{id}/lookup")
-    @PreAuthorize("@fileSecurity.hasAccessToFile(#id, authentication)")
-    public ResponseEntity<Page<FileDto>> lookupDirectory(@PathVariable @NullableUUID String id,
-                                                         @RequestParam int page,
-                                                         @RequestParam int pageSize) {
-        Page<FileDto> files = this.fileStorageService.lookupDirectory(id,
-                page,
-                pageSize);
 
-        return ResponseEntity.ok(files);
-    }
 
     @PostMapping("/avatar")
     public ResponseEntity<String> loadAvatar(@RequestPart @NotNull MultipartFile file,
                                              @RequestParam String displayName) {
         return ResponseEntity.ok(file.getOriginalFilename() + " " + displayName);
     }
-
-
 }

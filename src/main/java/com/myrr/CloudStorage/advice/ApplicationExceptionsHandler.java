@@ -2,7 +2,9 @@ package com.myrr.CloudStorage.advice;
 
 import com.myrr.CloudStorage.domain.dto.ErrorResponseDto;
 import com.myrr.CloudStorage.domain.dto.ValidationErrorResponseDto;
+import com.myrr.CloudStorage.domain.enums.ApiErrorCode;
 import com.myrr.CloudStorage.domain.exceptions.BaseException;
+import jakarta.validation.ConstraintViolationException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
@@ -31,6 +33,15 @@ public class ApplicationExceptionsHandler {
         return ResponseEntity
                 .badRequest()
                 .body(new ValidationErrorResponseDto<>(errors));
+    }
+
+    @ExceptionHandler(ConstraintViolationException.class)
+    public ResponseEntity<ErrorResponseDto> handle(ConstraintViolationException exception) {
+        ErrorResponseDto responseDto = new ErrorResponseDto(
+                "Invalid data",
+                ApiErrorCode.INVALID_DATA
+            );
+        return new ResponseEntity<>(responseDto, HttpStatus.BAD_REQUEST);
     }
 
     @ExceptionHandler(BaseException.class)
