@@ -1,0 +1,2 @@
+ALTER TABLE files_metadata
+ADD COLUMN full_path VARCHAR(255) NOT NULL UNIQUE;
