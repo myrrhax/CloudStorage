@@ -2,10 +2,8 @@ package com.myrr.CloudStorage.utils.mapping;
 
 import com.myrr.CloudStorage.domain.dto.UserDto;
 import com.myrr.CloudStorage.domain.entity.User;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
-import org.springframework.web.util.UriComponentsBuilder;
 
 import java.util.stream.Collectors;
 

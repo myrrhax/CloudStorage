@@ -7,7 +7,6 @@ import com.myrr.CloudStorage.domain.entity.Role;
 import com.myrr.CloudStorage.domain.entity.User;
 import com.myrr.CloudStorage.domain.enums.RoleType;
 import com.myrr.CloudStorage.domain.exceptions.conflict.UsernameOrEmailAlreadyExistsException;
-import com.myrr.CloudStorage.domain.exceptions.notfound.UserNotFoundException;
 import com.myrr.CloudStorage.domain.exceptions.unathorized.InvalidRefreshTokenException;
 import com.myrr.CloudStorage.repository.UserRepository;
 import com.myrr.CloudStorage.service.AuthService;
@@ -21,9 +20,6 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
-import java.security.Principal;
-import java.util.Optional;
 
 @Service
 @Transactional

@@ -2,7 +2,6 @@ package com.myrr.CloudStorage.utils.jwt;
 
 import com.myrr.CloudStorage.domain.entity.RefreshToken;
 import com.myrr.CloudStorage.domain.entity.User;
-import com.myrr.CloudStorage.domain.enums.RoleType;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
