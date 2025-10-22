@@ -4,6 +4,7 @@ import com.myrr.CloudStorage.domain.dto.FileDto;
 import com.myrr.CloudStorage.domain.entity.FileMetadata;
 import com.myrr.CloudStorage.domain.entity.User;
 import com.myrr.CloudStorage.domain.enums.FileType;
+import com.myrr.CloudStorage.domain.exceptions.UnableToDeleteFileException;
 import com.myrr.CloudStorage.domain.exceptions.UnableToLoadFileException;
 import com.myrr.CloudStorage.domain.exceptions.badrequest.FileCannotBeNullException;
 import com.myrr.CloudStorage.domain.exceptions.badrequest.InvalidFileExtensionException;
@@ -21,6 +22,7 @@ import com.myrr.CloudStorage.utils.MinioProperties;
 import io.minio.GetObjectArgs;
 import io.minio.MinioClient;
 import io.minio.PutObjectArgs;
+import io.minio.RemoveObjectArgs;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -132,8 +134,11 @@ public class MinioFileStorage implements FileStorageService {
             metadata.setParent(newParent);
             this.fileMetadataRepository.flush();
 
+            log.info("File with id {} successfully updated", metadata.getId());
+
             return this.metadataFabric.convert(metadata);
         } catch (Exception ex) {
+            log.error("Unable to update file with id: {}", metadata.getId(), ex);
             throw new FileAlreadyExistsException();
         }
     }
@@ -211,6 +216,30 @@ public class MinioFileStorage implements FileStorageService {
             throw new FilesNotFoundException();
 
         return result.map(this.metadataFabric::convert);
+    }
+
+    @Override
+    public void deleteFile(UUID fileId) {
+        FileMetadata metadata = this.fileMetadataRepository.findById(fileId)
+                .orElseThrow(FilesNotFoundException::new);
+
+        String minioName = this.fileStorageExtensions.getFileName(metadata.getOwner().getId(),
+                metadata.getId().toString());
+
+        try {
+            this.fileMetadataRepository.deleteById(fileId);
+            this.fileMetadataRepository.flush();
+
+            this.minioClient.removeObject(RemoveObjectArgs.builder()
+                    .bucket(this.minioProperties.getFilesBucket())
+                    .object(minioName)
+                    .build());
+            log.info("File with id {} successfully deleted", fileId);
+        } catch (Exception e) {
+            log.error("Unable to remove file {}", fileId, e);
+            throw new UnableToDeleteFileException();
+        }
+
     }
 
     private Optional<FileMetadata> getParentById(UUID usedDirectoryId) {

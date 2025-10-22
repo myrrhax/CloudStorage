@@ -17,4 +17,5 @@ public interface FileStorageService {
     FileDto downloadFile(UUID fileId);
     FileDto createDirectory(String directoryName, String parentId, long userId);
     Page<FileDto> lookupDirectory(String directoryId, long ownerId, int page, int pageSize);
+    void deleteFile(UUID fileId);
 }

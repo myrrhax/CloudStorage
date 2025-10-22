@@ -67,10 +67,21 @@ public class FileController {
     }
 
     @PutMapping
+    @PreAuthorize("@fileSecurity.hasAccessToFile(#dto.getId(), authentication)")
     public ResponseEntity<FileDto> updateFile(@RequestBody FileDto dto) {
         FileDto result = this.fileStorageService.updateFileMetadata(dto);
 
         return ResponseEntity.ok(result);
+    }
+
+    @DeleteMapping("/{id}")
+    @PreAuthorize("@fileSecurity.hasAccessToFile(#id, authentication)")
+    public ResponseEntity<Void> deleteFile(@PathVariable java.util.UUID id) {
+        this.fileStorageService.deleteFile(id);
+
+        return ResponseEntity
+                .noContent()
+                .build();
     }
 
     @PostMapping("/avatar")
