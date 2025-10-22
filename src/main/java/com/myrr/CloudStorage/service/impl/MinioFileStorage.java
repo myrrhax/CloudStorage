@@ -11,64 +11,56 @@ import com.myrr.CloudStorage.domain.exceptions.badrequest.InvalidParentException
 import com.myrr.CloudStorage.domain.exceptions.conflict.FileAlreadyExistsException;
 import com.myrr.CloudStorage.domain.exceptions.notfound.ApplicationFileNotFoundException;
 import com.myrr.CloudStorage.domain.exceptions.notfound.DirectoryNotFoundException;
+import com.myrr.CloudStorage.domain.exceptions.notfound.FilesNotFoundException;
 import com.myrr.CloudStorage.domain.exceptions.notfound.UserNotFoundException;
+import com.myrr.CloudStorage.fabric.FileMetadataFabric;
 import com.myrr.CloudStorage.repository.FileMetadataRepository;
 import com.myrr.CloudStorage.repository.UserRepository;
 import com.myrr.CloudStorage.service.FileStorageService;
+import com.myrr.CloudStorage.utils.FileStorageExtensions;
 import com.myrr.CloudStorage.utils.MinioProperties;
 import io.minio.GetObjectArgs;
 import io.minio.MinioClient;
 import io.minio.PutObjectArgs;
-import jakarta.annotation.PostConstruct;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
-import org.springframework.web.util.UriComponentsBuilder;
 
 import java.io.InputStream;
-import java.util.Set;
 import java.util.UUID;
 
 @Service
 @Transactional
 public class MinioFileStorage implements FileStorageService {
-    public static final String FILE_PATTERN = "%d/%s/%s";
-
-    private static final String EMPTY_UUID_PATTERN = "00000000-0000-0000-0000-000000000000";
     private static final Logger log = LoggerFactory.getLogger(MinioFileStorage.class);
 
     private final MinioClient minioClient;
     private final FileMetadataRepository fileMetadataRepository;
     private final MinioProperties minioProperties;
     private final UserRepository userRepository;
+    private final FileStorageExtensions fileStorageExtensions;
+    private final FileMetadataFabric metadataFabric;
 
-    @Value("${file.storage.extensions}")
-    private Set<String> validFileExtensions;
-
-    @Value("${file.server.path}")
-    private String fileServerUrl;
-
-    private String fileServerFileEndpoint;
 
     @Autowired
     public MinioFileStorage(MinioClient minioClient,
                             FileMetadataRepository fileMetadataRepository,
                             MinioProperties minioProperties,
-                            UserRepository userRepository) {
+                            UserRepository userRepository, FileStorageExtensions fileStorageExtensions, FileMetadataFabric metadataFabric) {
         this.minioClient = minioClient;
         this.fileMetadataRepository = fileMetadataRepository;
         this.minioProperties = minioProperties;
         this.userRepository = userRepository;
-    }
-
-    @PostConstruct
-    public void init() {
-        this.fileServerFileEndpoint = fileServerUrl + "{id}";
+        this.fileStorageExtensions = fileStorageExtensions;
+        this.metadataFabric = metadataFabric;
     }
 
     @Override
@@ -79,29 +71,26 @@ public class MinioFileStorage implements FileStorageService {
         if (file == null || file.getSize() == 0) {
             throw new FileCannotBeNullException();
         }
-        validateFileExtension(file);
+        this.fileStorageExtensions.validateFileExtension(file);
 
         if (filename == null || filename.isBlank()) {
             filename = file.getOriginalFilename();
         } else {
             try {
-                 getExtension(filename);
+                 this.fileStorageExtensions.getExtension(filename);
             } catch (InvalidFileExtensionException ex) {
                 if (file.getOriginalFilename() == null)
                     throw ex;
 
-                filename = filename + getExtension(file.getOriginalFilename());
+                filename = filename + this.fileStorageExtensions.getExtension(file.getOriginalFilename());
             }
         }
 
-        final UUID usedDirectoryId = parentDirectoryId == null || parentDirectoryId.isBlank()
-                ? UUID.fromString(EMPTY_UUID_PATTERN)
-                : UUID.fromString(parentDirectoryId);
-
+        UUID usedDirectoryId = this.fileStorageExtensions.parseNullableUUID(parentDirectoryId);
         User user = this.userRepository.findById(userId)
                 .orElseThrow(() -> new UserNotFoundException(userId));
 
-        FileMetadata parent = usedDirectoryId.equals(UUID.fromString(EMPTY_UUID_PATTERN))
+        FileMetadata parent = usedDirectoryId.equals(UUID.fromString(FileStorageExtensions.EMPTY_UUID_PATTERN))
                 ? null
                 : this.fileMetadataRepository.findById(usedDirectoryId)
                     .orElseThrow(() -> new DirectoryNotFoundException(usedDirectoryId));
@@ -115,7 +104,9 @@ public class MinioFileStorage implements FileStorageService {
         try {
             FileMetadata savedEntity = this.fileMetadataRepository.save(metadata);
             this.fileMetadataRepository.flush();
-            String name = FILE_PATTERN.formatted(userId, usedDirectoryId, savedEntity.getId().toString());
+            String name = this.fileStorageExtensions.getFileName(userId,
+                    savedEntity.getId().toString(),
+                    usedDirectoryId);
             this.minioClient.putObject(PutObjectArgs.builder()
                     .object(name)
                     .contentType(file.getContentType())
@@ -130,13 +121,7 @@ public class MinioFileStorage implements FileStorageService {
             throw new UnableToLoadFileException();
         }
 
-        return new FileDto(metadata.getId(),
-                metadata.getName(),
-                UriComponentsBuilder
-                        .fromUriString(this.fileServerFileEndpoint)
-                        .buildAndExpand(metadata.getId())
-                        .toUriString(),
-                FileType.FILE);
+        return metadataFabric.convert(metadata);
     }
 
     @Override
@@ -149,9 +134,9 @@ public class MinioFileStorage implements FileStorageService {
     public FileDto downloadFile(UUID fileId) {
         FileMetadata fileMetadata = getFileMetadata(fileId);
         String parentId = fileMetadata.getParent() == null
-                ? EMPTY_UUID_PATTERN
+                ? FileStorageExtensions.EMPTY_UUID_PATTERN
                 : fileMetadata.getParent().getId().toString();
-        String minioName = String.format(FILE_PATTERN,
+        String minioName = String.format(FileStorageExtensions.FILE_PATTERN,
                 fileMetadata.getOwner().getId(),
                 parentId,
                 fileMetadata.getId().toString());
@@ -173,32 +158,19 @@ public class MinioFileStorage implements FileStorageService {
             log.error("Unable to get file", e);
             throw new UnableToLoadFileException();
         }
-
     }
 
-    private static String getExtension(String name) {
-        int lastPointIndex = name.indexOf('.');
-        if (lastPointIndex == -1 || lastPointIndex == name.length() - 1)
-            throw new InvalidFileExtensionException();
+    @Override
+    public Page<FileDto> lookupDirectory(String directoryId, int page, int pageSize) {
+        Pageable pageRequest = PageRequest.of(page, pageSize, Sort.by("name"));
 
-        return name.substring(lastPointIndex);
-    }
+        Page<FileMetadata> result = this.fileMetadataRepository.findAllByParentId(
+                this.fileStorageExtensions.parseNullableUUID(directoryId),
+                pageRequest);
 
-    private void validateFileExtension(MultipartFile file) {
-        if (file == null || file.getOriginalFilename() == null) {
-            throw new FileCannotBeNullException();
-        }
+        if (result.getTotalElements() == 0 || result.getSize() == 0)
+            throw new FilesNotFoundException();
 
-        String extension = getExtension(file.getOriginalFilename());
-        if (!validFileExtensions.contains(extension))
-            throw new InvalidFileExtensionException();
-    }
-
-    public void setValidFileExtensions(Set<String> validFileExtensions) {
-        this.validFileExtensions = validFileExtensions;
-    }
-
-    public void setFileServerUrl(String fileServerUrl) {
-        this.fileServerUrl = fileServerUrl;
+        return result.map(this.metadataFabric::convert);
     }
 }

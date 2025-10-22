@@ -9,5 +9,6 @@ public enum ApiErrorCode {
     DIRECTORY_NOT_FOUND,
     FILE_CONFLICT,
     INVALID_PARENT,
-    FILE_NOT_FOUND
+    FILE_NOT_FOUND,
+    NO_FILES
 }

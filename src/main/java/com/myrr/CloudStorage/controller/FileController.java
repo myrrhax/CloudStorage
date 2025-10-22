@@ -8,6 +8,7 @@ import jakarta.validation.constraints.NotNull;
 import org.hibernate.validator.constraints.UUID;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.InputStreamResource;
+import org.springframework.data.domain.Page;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.MediaTypeFactory;
@@ -63,6 +64,18 @@ public class FileController {
                 .contentType(mediaType)
                 .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + id + "\"")
                 .body(new InputStreamResource(fileDto.getFileStream()));
+    }
+
+    @GetMapping("directories/{id}/lookup")
+    @PreAuthorize("@fileSecurity.hasAccessToFile(#id, authentication)")
+    public ResponseEntity<Page<FileDto>> lookupDirectory(@PathVariable @NullableUUID String id,
+                                                         @RequestParam int page,
+                                                         @RequestParam int pageSize) {
+        Page<FileDto> files = this.fileStorageService.lookupDirectory(id,
+                page,
+                pageSize);
+
+        return ResponseEntity.ok(files);
     }
 
     @PostMapping("/avatar")
