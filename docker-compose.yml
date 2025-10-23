@@ -1,0 +1,44 @@
+version: "3.1"
+
+services:
+  files:
+    container_name: files_storage
+    command: server /data --console-address ":9001"
+    image: minio/minio:latest
+    volumes:
+      - files_storage:/data
+    restart: always
+    env_file:
+      - .env
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+
+  db:
+    container_name: database
+    image: postgres
+    restart: always
+    env_file:
+      - .env
+    volumes:
+      - pg_db:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+
+  app:
+    container_name: application
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "8000:8000"
+    env_file:
+      - .env
+    restart: always
+    depends_on:
+      - db
+      - files
+
+volumes:
+  pg_db:
+  files_storage:
