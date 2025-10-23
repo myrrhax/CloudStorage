@@ -13,6 +13,8 @@ services:
     ports:
       - "9000:9000"
       - "9001:9001"
+    networks:
+      - backend
 
   db:
     container_name: database
@@ -24,6 +26,8 @@ services:
       - pg_db:/var/lib/postgresql/data
     ports:
       - "5432:5432"
+    networks:
+      - backend
 
   app:
     container_name: application
@@ -38,16 +42,12 @@ services:
     depends_on:
       - db
       - files
+    networks:
+      - backend
 
-  nginx:
-    container_name: nginx
-    restart: unless-stopped
-    image: nginx
-    ports:
-      - "80:80"
-      - "443:443"
-    volumes:
-      - ./nginx/nginx.conf:/etc/nginx/nginx.conf
+networks:
+  backend:
+    driver: bridge
 
 volumes:
   pg_db:
