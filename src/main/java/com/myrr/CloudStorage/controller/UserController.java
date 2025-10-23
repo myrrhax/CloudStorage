@@ -5,6 +5,8 @@ import com.myrr.CloudStorage.domain.dto.user.UserDto;
 import com.myrr.CloudStorage.security.JwtEntity;
 import com.myrr.CloudStorage.service.UserService;
 import com.myrr.CloudStorage.utils.jsonmarkers.PrivateView;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -15,6 +17,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 @RequestMapping("/api/users")
+@Tag(name = "Пользователи", description = "Контроллер пользователей")
 public class UserController {
     private final UserService userService;
 
@@ -25,6 +28,7 @@ public class UserController {
 
     @GetMapping("/me")
     @JsonView(PrivateView.class)
+    @Operation(summary = "О пользователе", description = "Получение данных о пользователе")
     public ResponseEntity<UserDto> me(@AuthenticationPrincipal UserDetails userDetails) {
         JwtEntity providedDetails = (JwtEntity) userDetails;
 
