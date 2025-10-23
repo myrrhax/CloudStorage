@@ -1,6 +1,6 @@
 package com.myrr.CloudStorage.service.impl;
 
-import com.myrr.CloudStorage.domain.dto.UserDto;
+import com.myrr.CloudStorage.domain.dto.user.UserDto;
 import com.myrr.CloudStorage.domain.entity.User;
 import com.myrr.CloudStorage.domain.exceptions.notfound.UserNotFoundException;
 import com.myrr.CloudStorage.repository.UserRepository;

@@ -1,6 +1,7 @@
 package com.myrr.CloudStorage.utils.mapping;
 
-import com.myrr.CloudStorage.domain.dto.UserDto;
+import com.myrr.CloudStorage.domain.dto.user.RegisterUserDto;
+import com.myrr.CloudStorage.domain.dto.user.UserDto;
 import com.myrr.CloudStorage.domain.entity.User;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
@@ -17,7 +18,6 @@ public class UserMapper {
                 user.getId(),
                 user.getName(),
                 user.getEmail(),
-                null,
                 user.getRoles().stream()
                         .map(role -> role.getRole().name())
                         .collect(Collectors.toSet()),
@@ -28,11 +28,11 @@ public class UserMapper {
         );
     }
 
-    public User fromDto(UserDto dto, boolean isConfirmed) {
+    public User fromDto(RegisterUserDto dto) {
         return new User(
-            dto.name(),
-            dto.email(),
-            dto.password()
+                dto.name(),
+                dto.email(),
+                dto.password()
         );
     }
 

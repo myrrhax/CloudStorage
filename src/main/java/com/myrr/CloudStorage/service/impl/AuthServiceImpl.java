@@ -1,12 +1,15 @@
 package com.myrr.CloudStorage.service.impl;
 
+import com.myrr.CloudStorage.domain.dto.user.LoginUserDto;
+import com.myrr.CloudStorage.domain.dto.user.RegisterUserDto;
 import com.myrr.CloudStorage.domain.dto.TokenResponseDto;
-import com.myrr.CloudStorage.domain.dto.UserDto;
+import com.myrr.CloudStorage.domain.dto.user.UserDto;
 import com.myrr.CloudStorage.domain.entity.RefreshToken;
 import com.myrr.CloudStorage.domain.entity.Role;
 import com.myrr.CloudStorage.domain.entity.User;
 import com.myrr.CloudStorage.domain.enums.RoleType;
 import com.myrr.CloudStorage.domain.exceptions.conflict.UsernameOrEmailAlreadyExistsException;
+import com.myrr.CloudStorage.domain.exceptions.notfound.UserNotFoundException;
 import com.myrr.CloudStorage.domain.exceptions.unathorized.InvalidRefreshTokenException;
 import com.myrr.CloudStorage.repository.UserRepository;
 import com.myrr.CloudStorage.service.AuthService;
@@ -44,7 +47,7 @@ public class AuthServiceImpl implements AuthService {
     }
 
     @Override
-    public TokenResponseDto register(UserDto dto) {
+    public TokenResponseDto register(RegisterUserDto dto) {
         User createdUser = saveUser(dto);
         RefreshToken preparedToken = this.jwtUtils.generateRefreshToken(createdUser);
         RefreshToken savedToken = this.refreshTokenService.save(preparedToken);
@@ -54,14 +57,14 @@ public class AuthServiceImpl implements AuthService {
     }
 
     @Override
-    public TokenResponseDto login(UserDto dto) {
+    public TokenResponseDto login(LoginUserDto dto) {
         Authentication authentication = new UsernamePasswordAuthenticationToken(
                 dto.name(),
                 dto.password()
         );
         this.authenticationManager.authenticate(authentication);
         User user = this.userRepository.findByName(dto.name())
-                .get();
+                .orElseThrow(() -> new UserNotFoundException(dto.name()));
         RefreshToken refreshToken = this.jwtUtils.generateRefreshToken(user);
         this.refreshTokenService.save(refreshToken);
         String accessToken = this.jwtUtils.generateToken(user);
@@ -88,8 +91,8 @@ public class AuthServiceImpl implements AuthService {
         return new TokenResponseDto(newAccessToken, newToken.getToken(), this.userMapper.toDto(user));
     }
 
-    private User saveUser(final UserDto dto) {
-        User user = this.userMapper.fromDto(dto, false);
+    private User saveUser(final RegisterUserDto dto) {
+        User user = this.userMapper.fromDto(dto);
         Role role = this.roleService.getRole(RoleType.USER);
         user.addRole(role);
         user.setPassword(this.passwordEncoder.encode(user.getPassword()));

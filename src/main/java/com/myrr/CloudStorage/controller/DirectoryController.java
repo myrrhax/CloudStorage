@@ -46,8 +46,8 @@ public class DirectoryController {
     @GetMapping("{id}")
     @PreAuthorize("@fileSecurity.hasAccessToFile(#id, authentication)")
     public ResponseEntity<Page<FileDto>> lookupDirectory(@PathVariable @NullableUUID String id,
-                                                      @RequestParam int page,
-                                                      @RequestParam int pageSize,
+                                                      @RequestParam(required = false, defaultValue = "0") int page,
+                                                      @RequestParam(required = false, defaultValue = "5") int pageSize,
                                                       @AuthenticationPrincipal UserDetails userDetails) {
         JwtEntity jwtEntity = (JwtEntity) userDetails;
         long userId = jwtEntity.getId();

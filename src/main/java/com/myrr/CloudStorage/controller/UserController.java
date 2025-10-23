@@ -1,7 +1,7 @@
 package com.myrr.CloudStorage.controller;
 
 import com.fasterxml.jackson.annotation.JsonView;
-import com.myrr.CloudStorage.domain.dto.UserDto;
+import com.myrr.CloudStorage.domain.dto.user.UserDto;
 import com.myrr.CloudStorage.security.JwtEntity;
 import com.myrr.CloudStorage.service.UserService;
 import com.myrr.CloudStorage.utils.jsonmarkers.PrivateView;

@@ -1,11 +1,12 @@
 package com.myrr.CloudStorage.controller;
 
 import com.myrr.CloudStorage.domain.dto.TokenResponseDto;
-import com.myrr.CloudStorage.domain.dto.UserDto;
+import com.myrr.CloudStorage.domain.dto.user.LoginUserDto;
+import com.myrr.CloudStorage.domain.dto.user.RegisterUserDto;
 import com.myrr.CloudStorage.service.AuthService;
-import com.myrr.CloudStorage.utils.validation.markers.Login;
-import com.myrr.CloudStorage.utils.validation.markers.OnCreate;
-import jakarta.validation.groups.Default;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -20,6 +21,8 @@ import org.springframework.web.util.UriComponentsBuilder;
 
 @RestController
 @RequestMapping("/api/auth")
+@Validated
+@Tag(name = "Аутентификация", description = "Контроллер с методами для работы с аккаунтом")
 public class AuthController {
     private static final Logger LOGGER = LoggerFactory.getLogger(AuthController.class);
     private final AuthService authService;
@@ -30,7 +33,8 @@ public class AuthController {
     }
 
     @PostMapping("/register")
-    public ResponseEntity<TokenResponseDto> register(@RequestBody @Validated({Default.class, OnCreate.class}) UserDto dto,
+    @Operation(summary = "Регистрация аккаунта", description = "Позволяет зарегистрировать новый аккаунт")
+    public ResponseEntity<TokenResponseDto> register(@RequestBody RegisterUserDto dto,
                                                      UriComponentsBuilder uriComponentsBuilder) {
         TokenResponseDto resultDto = this.authService.register(dto);
         UriComponents location = uriComponentsBuilder
@@ -42,7 +46,8 @@ public class AuthController {
     }
 
     @PostMapping("/login")
-    public ResponseEntity<TokenResponseDto> login(@RequestBody @Validated({Login.class}) UserDto dto) {
+    @Operation(summary = "Вход в аккаунт", description = "Позволяет войти в аккаунт и получить токены доступа")
+    public ResponseEntity<TokenResponseDto> login(@RequestBody LoginUserDto dto) {
         TokenResponseDto resultDto = this.authService.login(dto);
 
         return ResponseEntity.ok()
@@ -50,7 +55,8 @@ public class AuthController {
     }
 
     @PostMapping("/refresh")
-    public ResponseEntity<TokenResponseDto> refresh(@RequestBody final String refresh) {
+    @Operation(summary = "Обновление токенов", description = "Позволяет получить новую пару токенов по refresh-токену")
+    public ResponseEntity<TokenResponseDto> refresh(@RequestBody @Parameter(name = "Токен обновления", required = true) final String refresh) {
         TokenResponseDto resultDto = this.authService.refresh(refresh);
 
         return ResponseEntity.ok()
@@ -58,6 +64,7 @@ public class AuthController {
     }
 
     @PostMapping("/logout")
+    @Operation(summary = "Выход из аккаунта", description = "Позволяет инвалидировать токен")
     public ResponseEntity<Void> logout(@RequestBody String refresh) {
         this.authService.logout(refresh);
         return ResponseEntity.ok()
