@@ -4,33 +4,41 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.myrr.CloudStorage.domain.enums.FileType;
 import com.myrr.CloudStorage.utils.validation.validator.NullableUUID;
+import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
 
 import java.io.InputStream;
 import java.util.UUID;
 
+@Schema(name = "Dto файла в виртуальной ФС")
 public class FileDto {
 
     @JsonProperty("id")
     @NotNull
+    @Schema(name = "id файла")
     private UUID id;
 
     @JsonProperty("name")
     @NotEmpty
+    @Schema(name = "Название файла")
     private String name;
 
     @JsonProperty(value = "url", access = JsonProperty.Access.READ_ONLY)
+    @Schema(name = "Url", description = "Url для скачивания файла", deprecated = true)
     private String url;
 
     @JsonProperty(value = "fileType", access = JsonProperty.Access.READ_ONLY)
+    @Schema(name = "Тип файла", description = "FILE/DIRECTORY")
     private FileType fileType;
 
     @JsonProperty(value = "ownerId", access = JsonProperty.Access.READ_ONLY)
+    @Schema(name = "id владельца")
     private Long ownerId;
 
     @JsonProperty(value = "parentId")
     @NullableUUID
+    @Schema(name = "id родительской директории")
     private UUID parentId;
 
     @JsonIgnore
