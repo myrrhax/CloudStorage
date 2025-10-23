@@ -39,6 +39,16 @@ services:
       - db
       - files
 
+  nginx:
+    container_name: nginx
+    restart: unless-stopped
+    image: nginx
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf
+
 volumes:
   pg_db:
   files_storage:
