@@ -26,6 +26,5 @@ minio:
   filesBucket: users
 
 file:
-  server.path: http://localhost:8000/api
   storage:
     extensions: .jpg,.png,.pdf,.txt,.jpeg
