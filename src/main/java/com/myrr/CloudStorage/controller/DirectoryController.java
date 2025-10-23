@@ -4,9 +4,11 @@ import com.myrr.CloudStorage.domain.dto.CreateDirectoryDto;
 import com.myrr.CloudStorage.domain.dto.FileDto;
 import com.myrr.CloudStorage.security.JwtEntity;
 import com.myrr.CloudStorage.service.FileStorageService;
+import com.myrr.CloudStorage.utils.FileStorageExtensions;
 import com.myrr.CloudStorage.utils.validation.validator.NullableUUID;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -51,14 +53,25 @@ public class DirectoryController {
     @GetMapping("{id}")
     @PreAuthorize("@fileSecurity.hasAccessToFile(#id, authentication)")
     @Operation(summary = "Просмотр содержимого директории", description = "Возвращает список файлов, содержащихся в директории")
-    public ResponseEntity<Page<FileDto>> lookupDirectory(@PathVariable @NullableUUID @Parameter(name = "id файла") String id,
-                                                      @RequestParam(required = false, defaultValue = "0")
-                                                      @Parameter(name = "Номер страницы")
-                                                      int page,
-                                                      @RequestParam(required = false, defaultValue = "15")
-                                                      @Parameter(name = "Число элементов на странице")
-                                                      int pageSize,
-                                                      @AuthenticationPrincipal UserDetails userDetails) {
+    public ResponseEntity<Page<FileDto>> lookupDirectory(
+                                                  @PathVariable
+                                                  @NullableUUID
+                                                  @Parameter(
+                                                      description = "Id директории (или пустой UUID)",
+                                                      schema = @Schema(
+                                                          type = "string",
+                                                          format = "uuid",
+                                                          defaultValue = "00000000-0000-0000-0000-000000000000"
+                                                      )
+                                                  )
+                                                  String id,
+                                                  @RequestParam(required = false, defaultValue = "0")
+                                                  @Parameter(name = "Номер страницы")
+                                                  int page,
+                                                  @RequestParam(required = false, defaultValue = "15")
+                                                  @Parameter(name = "Число элементов на странице")
+                                                  int pageSize,
+                                                  @AuthenticationPrincipal UserDetails userDetails) {
         JwtEntity jwtEntity = (JwtEntity) userDetails;
         long userId = jwtEntity.getId();
 

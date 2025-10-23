@@ -16,29 +16,29 @@ public class FileDto {
 
     @JsonProperty("id")
     @NotNull
-    @Schema(name = "id файла")
+    @Schema(description = "id файла")
     private UUID id;
 
     @JsonProperty("name")
     @NotEmpty
-    @Schema(name = "Название файла")
+    @Schema(description = "Название файла")
     private String name;
 
     @JsonProperty(value = "url", access = JsonProperty.Access.READ_ONLY)
-    @Schema(name = "Url", description = "Url для скачивания файла", deprecated = true)
+    @Schema(description = "Url для скачивания файла", deprecated = true)
     private String url;
 
     @JsonProperty(value = "fileType", access = JsonProperty.Access.READ_ONLY)
-    @Schema(name = "Тип файла", description = "FILE/DIRECTORY")
+    @Schema(description = "FILE/DIRECTORY")
     private FileType fileType;
 
     @JsonProperty(value = "ownerId", access = JsonProperty.Access.READ_ONLY)
-    @Schema(name = "id владельца")
+    @Schema(description = "id владельца")
     private Long ownerId;
 
     @JsonProperty(value = "parentId")
     @NullableUUID
-    @Schema(name = "id родительской директории")
+    @Schema(description = "id родительской директории")
     private UUID parentId;
 
     @JsonIgnore
