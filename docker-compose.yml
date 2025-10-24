@@ -46,7 +46,7 @@ services:
       - backend
 
   nginx:
-    image: nginx:1.23.3
+    image: nginx:latest
     container_name: nginx
     ports:
       - "80:80"
