@@ -1,15 +1,15 @@
-version: "3.1"
+version: "3.8"
 
 services:
   files:
     container_name: files_storage
-    command: server /data --console-address ":9001"
     image: minio/minio:latest
-    volumes:
-      - files_storage:/data
+    command: server /data --console-address ":9001"
     restart: always
     env_file:
       - .env
+    volumes:
+      - files_storage:/data
     ports:
       - "9000:9000"
       - "9001:9001"
@@ -18,12 +18,12 @@ services:
 
   db:
     container_name: database
-    image: postgres
+    image: postgres:latest
     restart: always
     env_file:
       - .env
     volumes:
-      - pg_db:/var/lib/postgresql
+      - pg_db:/var/lib/postgresql/data
     ports:
       - "5432:5432"
     networks:
@@ -34,11 +34,11 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
-    ports:
-      - "8000:8000"
+    restart: always
     env_file:
       - .env
-    restart: always
+    ports:
+      - "8000:8000"
     depends_on:
       - db
       - files
@@ -48,29 +48,34 @@ services:
   nginx:
     image: nginx:latest
     container_name: nginx
+    restart: always
     ports:
       - "80:80"
       - "443:443"
     volumes:
-      - ./nginx/nginx.conf:/etc/nginx/nginx.conf
-      - ./nginx/cert.pem:/etc/cert.pem
-      - ./nginx/key.pem:/etc/key.pem
+      - ./nginx/conf.d:/etc/nginx/conf.d
+      - ./nginx/certbot/conf:/etc/letsencrypt
+      - ./nginx/certbot/www:/var/www/certbot
+    depends_on:
+      - app
+      - certbot
     networks:
       - backend
 
   certbot:
+    image: certbot/certbot:latest
     container_name: certbot
-    ports:
-      - "6000:80"
-    env_file:
-      - .env
     volumes:
-      - ./nginx/:etc/nginx
-    build:
-      context: ./certbot
-      dockerfile: Dockerfile
-      args:
-        DOMAIN_URL: ${DOMAIN_URL}
+      - ./nginx/certbot/conf:/etc/letsencrypt
+      - ./nginx/certbot/www:/var/www/certbot
+    entrypoint: >
+      sh -c "
+        trap exit TERM;
+        while :; do
+          certbot renew --quiet --deploy-hook 'nginx -s reload';
+          sleep 86400;
+        done
+      "
     networks:
       - backend
 
