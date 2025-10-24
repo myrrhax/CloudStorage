@@ -39,8 +39,8 @@ public class FileController {
     @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     @Operation(summary = "Загрузка", description = "Загрузка файла на сервер")
     public ResponseEntity<FileDto> loadFile(@RequestPart("file") @NotNull @Parameter(name = "Файл") MultipartFile file,
-                                            @RequestParam(value = "parent", required = false) @NullableUUID @Parameter(name = "Id родительской директории") String parentDirectoryId,
-                                            @RequestParam(value = "displayName", required = false) @Parameter(name = "Имя файла") String displayName,
+                                            @RequestParam(value = "parent", required = false) @NullableUUID @Parameter(description = "Id родительской директории") String parentDirectoryId,
+                                            @RequestParam(value = "displayName", required = false) @Parameter(description = "Имя файла") String displayName,
                                             @AuthenticationPrincipal UserDetails userDetails) {
 
         JwtEntity jwtEntity = (JwtEntity) userDetails;
