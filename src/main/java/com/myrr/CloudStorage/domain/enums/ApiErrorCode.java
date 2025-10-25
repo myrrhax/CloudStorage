@@ -10,5 +10,6 @@ public enum ApiErrorCode {
     FILE_CONFLICT,
     INVALID_PARENT,
     FILE_NOT_FOUND,
-    NO_FILES
+    NO_FILES,
+    FILE_MUST_BE_DIRECTORY
 }

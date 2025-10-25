@@ -7,6 +7,7 @@ import com.myrr.CloudStorage.domain.enums.FileType;
 import com.myrr.CloudStorage.domain.exceptions.UnableToDeleteFileException;
 import com.myrr.CloudStorage.domain.exceptions.UnableToLoadFileException;
 import com.myrr.CloudStorage.domain.exceptions.badrequest.FileCannotBeNullException;
+import com.myrr.CloudStorage.domain.exceptions.badrequest.FileMustBeDirectory;
 import com.myrr.CloudStorage.domain.exceptions.badrequest.InvalidFileExtensionException;
 import com.myrr.CloudStorage.domain.exceptions.badrequest.InvalidParentException;
 import com.myrr.CloudStorage.domain.exceptions.conflict.FileAlreadyExistsException;
@@ -131,6 +132,9 @@ public class MinioFileStorage implements FileStorageService {
 
         try {
             metadata.setName(updatedDto.getName());
+            if (newParent != null && !newParent.getType().equals(FileType.DIRECTORY)) {
+                throw new FileMustBeDirectory(newParent.getId());
+            }
             metadata.setParent(newParent);
             this.fileMetadataRepository.flush();
 
