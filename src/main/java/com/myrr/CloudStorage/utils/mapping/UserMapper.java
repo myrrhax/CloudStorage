@@ -10,7 +10,7 @@ import java.util.stream.Collectors;
 
 @Component
 public class UserMapper {
-    @Value("file.server.path")
+    @Value("${file.server.path}")
     private String fileServerPath;
 
     public UserDto toDto(User user) {
