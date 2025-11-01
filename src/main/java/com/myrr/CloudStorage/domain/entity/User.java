@@ -25,7 +25,7 @@ public class User {
     @Column(name = "is_confirmed", nullable = false)
     private Boolean isConfirmed;
 
-    @OneToOne(cascade = { CascadeType.PERSIST })
+    @OneToOne(cascade = CascadeType.ALL, orphanRemoval = true)
     @JoinColumn(name = "avatar_id")
     private FileMetadata avatar;
 

@@ -1,6 +1,7 @@
 package com.myrr.CloudStorage.service.impl;
 
 import com.myrr.CloudStorage.domain.dto.FileDto;
+import com.myrr.CloudStorage.domain.dto.FilledSpaceResponse;
 import com.myrr.CloudStorage.domain.entity.FileMetadata;
 import com.myrr.CloudStorage.domain.entity.User;
 import com.myrr.CloudStorage.domain.enums.FileType;
@@ -17,6 +18,7 @@ import com.myrr.CloudStorage.domain.exceptions.notfound.UserNotFoundException;
 import com.myrr.CloudStorage.fabric.FileMetadataFabric;
 import com.myrr.CloudStorage.repository.FileMetadataRepository;
 import com.myrr.CloudStorage.repository.UserRepository;
+import com.myrr.CloudStorage.security.JwtEntity;
 import com.myrr.CloudStorage.service.FileStorageService;
 import com.myrr.CloudStorage.utils.FileStorageExtensions;
 import com.myrr.CloudStorage.utils.MinioProperties;
@@ -24,6 +26,7 @@ import io.minio.GetObjectArgs;
 import io.minio.MinioClient;
 import io.minio.PutObjectArgs;
 import io.minio.RemoveObjectArgs;
+import io.minio.credentials.Jwt;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -32,6 +35,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
@@ -156,16 +160,23 @@ public class MinioFileStorage implements FileStorageService {
     @Override
     public FileDto downloadFile(UUID fileId) {
         FileMetadata fileMetadata = getFileMetadata(fileId);
-        String minioName = this.fileStorageExtensions.getFileName(
-            fileMetadata.getOwner().getId(),
-            fileMetadata.getId().toString()
+        if (fileMetadata.getType().equals(FileType.DIRECTORY))
+            throw new UnableToLoadFileException();
+
+        String minioName = fileMetadata.getType().equals(FileType.AVATAR)
+                ? fileMetadata.getId().toString()
+                : this.fileStorageExtensions.getFileName(
+                    fileMetadata.getOwner().getId(),
+                    fileMetadata.getId().toString()
         );
 
         log.info("Trying to get: {} file", minioName);
         try {
             InputStream stream = this.minioClient
                     .getObject(GetObjectArgs.builder()
-                            .bucket(minioProperties.getFilesBucket())
+                            .bucket(fileMetadata.getType().equals(FileType.AVATAR)
+                                    ? minioProperties.getAvatarBucket()
+                                    : minioProperties.getFilesBucket())
                             .object(minioName)
                             .build());
 
@@ -220,6 +231,65 @@ public class MinioFileStorage implements FileStorageService {
             throw new FilesNotFoundException();
 
         return result.map(this.metadataFabric::convert);
+    }
+
+    @Override
+    public FileDto loadAvatar(MultipartFile file) {
+        var jwtEntity = (JwtEntity) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        var user = this.userRepository.findById(jwtEntity.getId())
+                .orElseThrow(() -> new UserNotFoundException(jwtEntity.getId()));
+
+        try {
+            if (user.getAvatar() != null) {
+                String id = user.getAvatar().getId().toString();
+
+                user.setAvatar(null);
+                this.userRepository.saveAndFlush(user);
+
+                this.minioClient.removeObject(
+                        RemoveObjectArgs.builder()
+                                .bucket(this.minioProperties.getAvatarBucket())
+                                .object(id)
+                                .build()
+                );
+                log.info("Avatar with id {} for user {} was deleted", id, user.getId());
+            }
+            FileMetadata metadata = new FileMetadata(
+                    user.getId().toString() + this.fileStorageExtensions.getExtension(file.getOriginalFilename()),
+                    FileType.AVATAR,
+                    user,
+                    null,
+                    file.getSize());
+
+            FileMetadata savedEntity = this.fileMetadataRepository.saveAndFlush(metadata);
+            user.setAvatar(savedEntity);
+
+            this.minioClient.putObject(new PutObjectArgs.Builder()
+                    .object(savedEntity.getId().toString())
+                    .stream(file.getInputStream(), file.getSize(), 0)
+                    .bucket(this.minioProperties.getAvatarBucket())
+                    .contentType(file.getContentType())
+                    .build()
+            );
+            log.info("An avatar {} for user {} successfully loaded to server", savedEntity.getId(),
+                    user.getId());
+
+            return this.metadataFabric.convert(savedEntity);
+
+        } catch (Exception e) {
+            log.error("An error occurred loading avatar to server", e);
+
+            throw new UnableToLoadFileException();
+        }
+
+    }
+
+    @Override
+    public FilledSpaceResponse getFilledSpaceInfo() {
+        JwtEntity user = (JwtEntity) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        long space = this.fileMetadataRepository.getFilledSpace(user.getId());
+
+        return new FilledSpaceResponse(space, 0);
     }
 
     @Override

@@ -41,6 +41,10 @@ public class FileDto {
     @Schema(description = "id родительской директории")
     private UUID parentId;
 
+    @JsonProperty(value = "size", access = JsonProperty.Access.READ_ONLY)
+    @Schema(description = "Размер файла")
+    private long size;
+
     @JsonIgnore
     private InputStream fileStream;
 
@@ -48,13 +52,16 @@ public class FileDto {
                    String name,
                    String url,
                    FileType fileType,
-                   Long ownerId, UUID parentId) {
+                   Long ownerId,
+                   UUID parentId,
+                   long size) {
         this.id = id;
         this.name = name;
         this.url = url;
         this.fileType = fileType;
         this.ownerId = ownerId;
         this.parentId = parentId;
+        this.size = size;
     }
 
     public UUID getId() {

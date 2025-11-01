@@ -24,7 +24,8 @@ public class FileMetadataDefaultImpl implements FileMetadataFabric {
                 getFileUrl(metadata),
                 metadata.getType(),
                 metadata.getOwner().getId(),
-                metadata.getParent() == null ? FileStorageExtensions.EMPTY_UUID : metadata.getParent().getId()
+                metadata.getParent() == null ? FileStorageExtensions.EMPTY_UUID : metadata.getParent().getId(),
+                metadata.getSize()
         );
     }
 
@@ -37,9 +38,9 @@ public class FileMetadataDefaultImpl implements FileMetadataFabric {
     }
 
     private String getFileUrl(FileMetadata metadata) {
-        String uriString = this.fileServerUrl + (metadata.getType().equals(FileType.FILE)
-                ? "/files/"
-                : "/directories/"
+        String uriString = this.fileServerUrl + (metadata.getType().equals(FileType.DIRECTORY)
+                ? "/directories/"
+                : "/files/"
             ) + metadata.getId();
 
         return UriComponentsBuilder

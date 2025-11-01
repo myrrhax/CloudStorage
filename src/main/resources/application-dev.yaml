@@ -1,0 +1,8 @@
+spring:
+  datasource:
+    url: jdbc:postgresql://localhost:5432/cloudStorage
+
+minio:
+  endpoint: http://localhost:9000
+
+file.server.path: http://localhost:8000/api

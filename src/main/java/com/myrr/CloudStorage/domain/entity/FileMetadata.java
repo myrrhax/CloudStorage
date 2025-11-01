@@ -17,7 +17,7 @@ public class FileMetadata {
     @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
 
-    @Column(name = "name", nullable = false)
+    @Column(name = "name")
     private String name;
 
     @Column(name = "file_type", nullable = false)

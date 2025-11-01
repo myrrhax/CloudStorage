@@ -27,4 +27,5 @@ minio:
 
 file:
   storage:
-    extensions: .jpg,.png,.pdf,.txt,.jpeg
+    extensions: .jpg, .png, .pdf, .txt, .jpeg, .mp3, .mp4, .avi, .rtf, .doc, .docx
+    avatar-extensions: .jpg, .jpeg, .png

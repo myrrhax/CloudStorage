@@ -1,9 +1,11 @@
 package com.myrr.CloudStorage.controller;
 
 import com.myrr.CloudStorage.domain.dto.FileDto;
+import com.myrr.CloudStorage.domain.dto.FilledSpaceResponse;
 import com.myrr.CloudStorage.security.JwtEntity;
 import com.myrr.CloudStorage.service.FileStorageService;
 import com.myrr.CloudStorage.utils.validation.validator.NullableUUID;
+import com.myrr.CloudStorage.utils.validation.validator.ValidAvatar;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -66,7 +68,7 @@ public class FileController {
 
         return ResponseEntity.ok()
                 .contentType(mediaType)
-                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + fileDto.getName() + "\"")
+                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + fileDto.getId() + "\"")
                 .body(new InputStreamResource(fileDto.getFileStream()));
     }
 
@@ -88,5 +90,21 @@ public class FileController {
         return ResponseEntity
                 .noContent()
                 .build();
+    }
+
+    @PostMapping("/avatars")
+    @Operation(summary = "Загрузка аватара")
+    public ResponseEntity<FileDto> loadAvatar(@RequestPart("avatar") @ValidAvatar @Parameter(name = "Файл") MultipartFile file) {
+        FileDto dto = this.fileStorageService.loadAvatar(file);
+
+        return ResponseEntity
+                .ok(dto);
+    }
+
+    @GetMapping("/filledSpace")
+    @Operation(summary = "Ифнормация о занятости диска")
+    public ResponseEntity<FilledSpaceResponse> getFilledSpaceInfo() {
+        return ResponseEntity
+                .ok(this.fileStorageService.getFilledSpaceInfo());
     }
 }

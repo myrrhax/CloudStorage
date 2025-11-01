@@ -1,6 +1,7 @@
 package com.myrr.CloudStorage.service;
 
 import com.myrr.CloudStorage.domain.dto.FileDto;
+import com.myrr.CloudStorage.domain.dto.FilledSpaceResponse;
 import com.myrr.CloudStorage.domain.entity.FileMetadata;
 import org.springframework.data.domain.Page;
 import org.springframework.web.multipart.MultipartFile;
@@ -17,5 +18,7 @@ public interface FileStorageService {
     FileDto downloadFile(UUID fileId);
     FileDto createDirectory(String directoryName, String parentId, long userId);
     Page<FileDto> lookupDirectory(String directoryId, long ownerId, int page, int pageSize);
+    FileDto loadAvatar(MultipartFile file);
+    FilledSpaceResponse getFilledSpaceInfo();
     void deleteFile(UUID fileId);
 }
