@@ -23,7 +23,7 @@ public class UserMapper {
                         .collect(Collectors.toSet()),
                 user.getConfirmed(),
                 user.getAvatar() != null
-                        ? fileServerPath + user.getAvatar().getId()
+                        ? fileServerPath + "/files/" + user.getAvatar().getId()
                         : null
         );
     }
