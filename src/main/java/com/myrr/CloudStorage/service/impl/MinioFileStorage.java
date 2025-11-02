@@ -7,10 +7,7 @@ import com.myrr.CloudStorage.domain.entity.User;
 import com.myrr.CloudStorage.domain.enums.FileType;
 import com.myrr.CloudStorage.domain.exceptions.UnableToDeleteFileException;
 import com.myrr.CloudStorage.domain.exceptions.UnableToLoadFileException;
-import com.myrr.CloudStorage.domain.exceptions.badrequest.FileCannotBeNullException;
-import com.myrr.CloudStorage.domain.exceptions.badrequest.FileMustBeDirectory;
-import com.myrr.CloudStorage.domain.exceptions.badrequest.InvalidFileExtensionException;
-import com.myrr.CloudStorage.domain.exceptions.badrequest.InvalidParentException;
+import com.myrr.CloudStorage.domain.exceptions.badrequest.*;
 import com.myrr.CloudStorage.domain.exceptions.conflict.FileAlreadyExistsException;
 import com.myrr.CloudStorage.domain.exceptions.notfound.ApplicationFileNotFoundException;
 import com.myrr.CloudStorage.domain.exceptions.notfound.FilesNotFoundException;
@@ -131,11 +128,24 @@ public class MinioFileStorage implements FileStorageService {
     public FileDto updateFileMetadata(FileDto updatedDto) {
         FileMetadata metadata = this.fileMetadataRepository.findById(updatedDto.getId())
                 .orElseThrow(FilesNotFoundException::new);
-        FileMetadata newParent = this.fileMetadataRepository.findById(updatedDto.getParentId())
-                        .orElseThrow(FilesNotFoundException::new);
+
+        FileMetadata newParent = null;
+        if (updatedDto.getParentId() != null) {
+           newParent = this.fileMetadataRepository.findById(updatedDto.getParentId())
+                    .orElse(null);
+        }
 
         try {
+            if (metadata.getType().equals(FileType.FILE)) {
+                String originalExtension = this.fileStorageExtensions.getExtension(metadata.getName());
+                String parsedExtension = this.fileStorageExtensions.getExtension(updatedDto.getName());
+
+                if (!originalExtension.equals(parsedExtension)) {
+                    throw new FileExtensionCantBeChangedException(originalExtension, parsedExtension);
+                }
+            }
             metadata.setName(updatedDto.getName());
+
             if (newParent != null && !newParent.getType().equals(FileType.DIRECTORY)) {
                 throw new FileMustBeDirectory(newParent.getId());
             }
@@ -145,10 +155,21 @@ public class MinioFileStorage implements FileStorageService {
             log.info("File with id {} successfully updated", metadata.getId());
 
             return this.metadataFabric.convert(metadata);
+        } catch (FileExtensionCantBeChangedException ex) {
+            log.error("Failed to update file name due to changing extension for file: {}", updatedDto.getId());
+
+            throw ex;
+        } catch (InvalidFileExtensionException ex) {
+            log.error("Failed to update file name due to invalid file extension for name: {}\n" +
+                    "(File id: {}):", updatedDto.getName(), updatedDto.getId());
+
+            throw ex;
         } catch (Exception ex) {
             log.error("Unable to update file with id: {}", metadata.getId(), ex);
             throw new FileAlreadyExistsException();
         }
+
+
     }
 
     @Override
