@@ -10,6 +10,14 @@ import org.springframework.data.repository.query.Param;
 import java.util.UUID;
 
 public interface FileMetadataRepository extends JpaRepository<FileMetadata, UUID> {
+    @Query("""
+        SELECT fm
+        FROM FileMetadata fm
+        WHERE fm.owner.id = :ownerId
+          AND ((fm.parent IS NULL AND :parentId IS NULL) 
+            OR (fm.parent IS NOT NULL AND fm.parent.id = :parentId))
+          AND fm.type != com.myrr.CloudStorage.domain.enums.FileType.AVATAR
+       """)
     Page<FileMetadata> findAllByParentIdAndOwnerId(UUID parentId,
                                                    long ownerId,
                                                    Pageable pageable);
