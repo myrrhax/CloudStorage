@@ -19,7 +19,7 @@ public class FileStorageExtensions {
     private Set<String> validFileExtensions;
 
     public String getExtension(String name) {
-        int lastPointIndex = name.indexOf('.');
+        int lastPointIndex = name.lastIndexOf('.');
         if (lastPointIndex == -1 || lastPointIndex == name.length() - 1)
             throw new InvalidFileExtensionException();
 
